@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+@media print {
+  /* Reset document layout for clean print / PDF generation */
+  html, body, #root, main {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    width: 100% !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Preserve dark theme specifically for Mini Plan print area */
+  #mini-plan-print-area {
+    background-color: #030914 !important;
+    color: #f1f5f9 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    page-break-inside: avoid;
+  }
+
+  /* Prevent bay cards from splitting across page breaks */
+  #mini-plan-print-area .grid > div {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Hide navigation sidebar, top bars, floating tools, and elements marked print:hidden */
+  aside,
+  nav,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Expand main container full width without scrollbars */
+  main {
+    position: static !important;
+    display: block !important;
+    width: 100% !important;
+  }
+
+  /* Preserve background colors and borders in PDF output */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* A3 Landscape Print Setup with minimal margins to prevent clipping */
+  @page {
+    size: A3 landscape;
+    margin: 4mm;
+  }
+}
+

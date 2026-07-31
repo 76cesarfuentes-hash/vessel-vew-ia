@@ -1,0 +1,6 @@
+{
+  "name": "Enterprise Terminal Planning Platform",
+  "description": "Operational maritime terminal planning platform for EDI, BAPLIE, MOVINS, stowage visualization, container reconciliation, auditing, and reports.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
