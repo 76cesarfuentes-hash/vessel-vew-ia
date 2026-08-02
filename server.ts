@@ -2,6 +2,8 @@ import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
+import { applySecurityHeaders, requireAuth } from './server/security/middleware.js';
+import { securityRouter } from './server/security/routes.js';
 
 const PORT = 3000;
 
@@ -9,13 +11,19 @@ async function startServer() {
   const app = express();
   app.use(express.json({ limit: '20mb' }));
 
-  // API Routes FIRST
+  // Apply OWASP Security Headers
+  app.use(applySecurityHeaders);
+
+  // Mount Security & Authentication API Routes
+  app.use('/api', securityRouter);
+
+  // API Health Check
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', app: 'Enterprise Terminal Planning Platform' });
   });
 
-  // Server-side Stowage Copilot API endpoint using Gemini
-  app.post('/api/copilot', async (req, res) => {
+  // Server-side Stowage Copilot API endpoint using Gemini (Protected)
+  app.post('/api/copilot', requireAuth, async (req, res) => {
     try {
       const { prompt, containers, activeTerminal, podSequence } = req.body;
 

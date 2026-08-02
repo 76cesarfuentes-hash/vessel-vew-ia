@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useStowageStore } from './core/stores/useStowageStore';
+import { useAuth } from './core/security/AuthContext';
+import { LoginView } from './components/security/LoginView';
+import { ForcePasswordChangeModal } from './components/security/ForcePasswordChangeModal';
+import { UserSecurityBar } from './components/security/UserSecurityBar';
+
 import { TerminalGateModal } from './components/common/TerminalGateModal';
 import { ContainerDetailModal } from './components/container/ContainerDetailModal';
 import { GlobalVoiceCopilot } from './components/common/GlobalVoiceCopilot';
@@ -41,10 +46,13 @@ import {
   Sliders,
   Zap,
   Cast,
-  Tv
+  Tv,
+  ShieldCheck
 } from 'lucide-react';
 
 export default function App() {
+  const { isAuthenticated, isLoading, user, logClientAudit } = useAuth();
+
   const {
     parsedContainers,
     parsedDischargeContainers,
@@ -79,6 +87,21 @@ export default function App() {
     }
   }, []);
 
+  // 1. Loading Screen
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 bg-[#050D18] flex flex-col items-center justify-center p-4 font-mono text-cyan-400">
+        <ShieldCheck className="w-12 h-12 animate-pulse mb-3 text-cyan-400" />
+        <p className="text-sm tracking-widest font-bold uppercase">VERIFICANDO AUTENTICACIÓN Y SEGURIDAD EMPRESARIAL...</p>
+      </div>
+    );
+  }
+
+  // 2. Unauthenticated -> Render ONLY Login Screen (Layer 1 & Layer 6)
+  if (!isAuthenticated) {
+    return <LoginView />;
+  }
+
   const handleBaplieUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -87,6 +110,7 @@ export default function App() {
     reader.onload = (evt) => {
       const text = evt.target?.result as string;
       loadBaplieContent(text, file.name);
+      logClientAudit('LOAD_BAPLIE', `Archivo BAPLIE cargado: ${file.name}`);
     };
     reader.readAsText(file);
   };
@@ -99,17 +123,26 @@ export default function App() {
     reader.onload = (evt) => {
       const text = evt.target?.result as string;
       loadMovinsContent(text, file.name);
+      logClientAudit('LOAD_MOVINS', `Archivo MOVINS cargado: ${file.name}`);
     };
     reader.readAsText(file);
   };
 
   const handleLoadDemo = () => {
     loadFullRealisticDemo();
+    logClientAudit('LOAD_DEMO', 'Muestra BAPLIE realista cargada.');
   };
 
   return (
     <div className="flex flex-col md:flex-row h-screen w-screen overflow-hidden bg-[#0A1A29] text-slate-100 font-sans select-none">
+      
+      {/* Forced Password Change Overlay if user must change password */}
+      {user?.mustChangePassword && (
+        <ForcePasswordChangeModal onSuccess={() => window.location.reload()} />
+      )}
+
       {/* ── DESKTOP LEFT NAVIGATION SIDEBAR (MD+) ── */}
+
       <aside className="hidden md:flex w-16 flex-shrink-0 bg-[#0D1E30] border-r border-slate-800/80 flex-col items-center py-4 gap-3 z-40">
         {/* Brand Logo */}
         <div
@@ -427,6 +460,9 @@ export default function App() {
               <BarChart3 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400" />
               <span>MANO MÁS LARGA</span>
             </button>
+
+            {/* Enterprise Security User Bar */}
+            <UserSecurityBar />
           </div>
         </header>
 
