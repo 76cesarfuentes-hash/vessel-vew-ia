@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../core/security/AuthContext';
-import appLogo from '../../assets/logo.jpg';
-import { ShieldCheck, Lock, User as UserIcon, LogIn, AlertTriangle, KeyRound } from 'lucide-react';
+import appLogoGenerated from '../../assets/images/stowage_app_logo_1785618008257.jpg';
+import appLogoPng from '../../assets/logo.png';
+import appLogoJpg from '../../assets/logo.jpg';
+import { ShieldCheck, Lock, User as UserIcon, LogIn, AlertTriangle, KeyRound, Anchor, Ship } from 'lucide-react';
 
 export const LoginView: React.FC = () => {
   const { login } = useAuth();
@@ -9,6 +11,18 @@ export const LoginView: React.FC = () => {
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [imgSrc, setImgSrc] = useState<string>(appLogoGenerated || appLogoPng || appLogoJpg);
+  const [imgFailed, setImgFailed] = useState<boolean>(false);
+
+  const handleImgError = () => {
+    if (imgSrc === appLogoGenerated) {
+      setImgSrc(appLogoPng);
+    } else if (imgSrc === appLogoPng) {
+      setImgSrc(appLogoJpg);
+    } else {
+      setImgFailed(true);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,12 +54,20 @@ export const LoginView: React.FC = () => {
         {/* Header with App Logo */}
         <div className="flex flex-col items-center text-center mb-8">
           <div className="relative mb-4">
-            <img
-              src={appLogo}
-              alt="Logo Corporativo TOS"
-              className="w-20 h-20 rounded-2xl object-cover border-2 border-cyan-400/80 shadow-[0_0_25px_rgba(0,229,255,0.4)]"
-              referrerPolicy="no-referrer"
-            />
+            {!imgFailed ? (
+              <img
+                src={imgSrc}
+                onError={handleImgError}
+                alt="Logo Corporativo TOS"
+                className="w-24 h-24 rounded-2xl object-cover border-2 border-cyan-400/80 shadow-[0_0_25px_rgba(0,229,255,0.4)]"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-cyan-950 via-[#0A1A2B] to-blue-950 border-2 border-cyan-400/80 shadow-[0_0_25px_rgba(0,229,255,0.4)] flex flex-col items-center justify-center p-2 text-cyan-400">
+                <Ship className="w-10 h-10 text-cyan-300" />
+                <span className="text-[10px] font-black font-mono tracking-widest mt-1 text-cyan-400">TOS PORT</span>
+              </div>
+            )}
             <div className="absolute -bottom-1 -right-1 bg-cyan-950 border border-cyan-400 text-cyan-400 p-1 rounded-full shadow">
               <ShieldCheck className="w-4 h-4" />
             </div>

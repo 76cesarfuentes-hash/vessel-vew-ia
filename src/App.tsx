@@ -24,7 +24,9 @@ import { AutoStowagePlannerView } from './modules/AutoStowagePlannerView';
 
 import { generateSampleBaplieContainers } from './core/parser/demoData';
 
-import appLogo from './assets/logo.jpg';
+import appLogoGenerated from './assets/images/stowage_app_logo_1785618008257.jpg';
+import appLogoPng from './assets/logo.png';
+import appLogoJpg from './assets/logo.jpg';
 
 import { ShareTransmitModal } from './components/common/ShareTransmitModal';
 
@@ -79,6 +81,19 @@ export default function App() {
 
   const [isManoMasLargaModalOpen, setIsManoMasLargaModalOpen] = useState<boolean>(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState<boolean>(false);
+
+  const [sidebarLogoSrc, setSidebarLogoSrc] = useState<string>(appLogoGenerated || appLogoPng || appLogoJpg);
+  const [sidebarLogoFailed, setSidebarLogoFailed] = useState<boolean>(false);
+
+  const handleSidebarLogoError = () => {
+    if (sidebarLogoSrc === appLogoGenerated) {
+      setSidebarLogoSrc(appLogoPng);
+    } else if (sidebarLogoSrc === appLogoPng) {
+      setSidebarLogoSrc(appLogoJpg);
+    } else {
+      setSidebarLogoFailed(true);
+    }
+  };
 
   // Load realistic demo BAPLIE + MOVINS if empty initially so user can test right away
   useEffect(() => {
@@ -150,12 +165,19 @@ export default function App() {
           title="Terminal Planning Platform TOS"
           onClick={() => setActiveTab('estiba')}
         >
-          <img
-            src={appLogo}
-            alt="Terminal Planning Platform Logo"
-            className="w-10 h-10 rounded-xl object-cover border border-cyan-500/50 shadow-[0_0_15px_rgba(0,229,255,0.4)] group-hover:border-cyan-400"
-            referrerPolicy="no-referrer"
-          />
+          {!sidebarLogoFailed ? (
+            <img
+              src={sidebarLogoSrc}
+              onError={handleSidebarLogoError}
+              alt="Terminal Planning Platform Logo"
+              className="w-10 h-10 rounded-xl object-cover border border-cyan-500/50 shadow-[0_0_15px_rgba(0,229,255,0.4)] group-hover:border-cyan-400"
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <div className="w-10 h-10 rounded-xl bg-cyan-950 border border-cyan-400/80 shadow-[0_0_15px_rgba(0,229,255,0.4)] flex items-center justify-center text-cyan-300 font-black text-xs font-mono">
+              TOS
+            </div>
+          )}
         </div>
 
         {/* Navigation Items */}
@@ -368,13 +390,23 @@ export default function App() {
         {/* Top Breadcrumb & Action Header */}
         <header className="flex-shrink-0 bg-[#0A1A29] border-b border-slate-800 px-3 md:px-5 py-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 z-30">
           <div className="min-w-0 flex items-center gap-2.5">
-            <img
-              src={appLogo}
-              alt="Logo TOS"
-              className="w-9 h-9 rounded-xl object-cover border border-cyan-500/50 shadow-[0_0_12px_rgba(0,229,255,0.4)] shrink-0 cursor-pointer hover:scale-105 transition-transform"
-              onClick={() => setActiveTab('estiba')}
-              referrerPolicy="no-referrer"
-            />
+            {!sidebarLogoFailed ? (
+              <img
+                src={sidebarLogoSrc}
+                onError={handleSidebarLogoError}
+                alt="Logo TOS"
+                className="w-9 h-9 rounded-xl object-cover border border-cyan-500/50 shadow-[0_0_12px_rgba(0,229,255,0.4)] shrink-0 cursor-pointer hover:scale-105 transition-transform"
+                onClick={() => setActiveTab('estiba')}
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div
+                onClick={() => setActiveTab('estiba')}
+                className="w-9 h-9 rounded-xl bg-cyan-950 border border-cyan-400/80 shadow-[0_0_12px_rgba(0,229,255,0.4)] flex items-center justify-center text-cyan-300 font-black text-xs font-mono shrink-0 cursor-pointer"
+              >
+                TOS
+              </div>
+            )}
             <div className="min-w-0">
               <h1 className="font-mono text-xs sm:text-sm md:text-base font-extrabold text-white tracking-wider sm:tracking-widest uppercase flex items-center gap-1.5 sm:gap-2 truncate">
                 <span className="truncate">TERMINAL PLANNING PLATFORM</span>
