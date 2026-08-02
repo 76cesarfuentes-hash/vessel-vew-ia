@@ -10,7 +10,7 @@ import { resetPodColors } from '../business/colorEngine';
 import { FilterState, DEFAULT_FILTER_STATE } from '../models/filter';
 import { applyFilters } from '../business/filterEngine';
 
-import { executeStowageAdjustment, AdjustmentActionRequest, AdjustmentResult } from '../business/adjustmentEngine';
+import { executeStowageAdjustment, AdjustmentActionRequest, AdjustmentResult, validateContainerStackingRules, StackingRuleViolation } from '../business/adjustmentEngine';
 
 export type ViewMode = 'MATRIZ' | 'ISLA' | 'PATIO' | 'ISLA_OPERATIVA';
 export type OperationView = 'DESCARGA' | 'CARGA';
@@ -370,6 +370,11 @@ export const stowageStore = {
     }
 
     return result;
+  },
+
+  validateStackingRules: (customContainers?: Container[]): StackingRuleViolation[] => {
+    const dataset = customContainers || globalState.parsedContainers;
+    return validateContainerStackingRules(dataset);
   }
 };
 
@@ -401,6 +406,7 @@ export function useStowageStore() {
     loadFullRealisticDemo: stowageStore.loadFullRealisticDemo,
     setFilters: stowageStore.setFilters,
     resetFilters: stowageStore.resetFilters,
-    executeAdjustment: stowageStore.executeAdjustment
+    executeAdjustment: stowageStore.executeAdjustment,
+    validateStackingRules: stowageStore.validateStackingRules
   };
 }

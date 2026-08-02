@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { Container } from '../../core/models/container';
 import { getContainerColor, getContrastTextColor } from '../../core/business/colorEngine';
 import { DGDiamondIcon, ReeferSnowflakeIcon } from '../../utils/svgIcons';
 import { NO_DATA } from '../../core/parser/portNormalizer';
-import { X, Package, ShieldAlert, Thermometer, Anchor, Scale, AlertTriangle, MapPin, Layers, FileCode, CheckCircle } from 'lucide-react';
+import { X, Package, ShieldAlert, Thermometer, Anchor, Scale, AlertTriangle, MapPin, Layers, FileCode, CheckCircle, AlertOctagon, Wrench, Sparkles, ArrowRight, Check } from 'lucide-react';
+import { useStowageStore } from '../../core/stores/useStowageStore';
+import { findStackingFixProposals, RelocationCandidateOption } from '../../core/business/stackingFixEngine';
 
 interface ContainerDetailModalProps {
   container: Container | null;
@@ -17,6 +19,10 @@ export const ContainerDetailModal: React.FC<ContainerDetailModalProps> = ({
   onClose
 }) => {
   if (!container) return null;
+
+  const [showFixPanel, setShowFixPanel] = useState<boolean>(false);
+  const [selectedBayFilter, setSelectedBayFilter] = useState<string>('ALL');
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
 
   const bgColor = getContainerColor(container.pod, activeTerminalKey);
   const textColor = getContrastTextColor(bgColor);
@@ -34,6 +40,28 @@ export const ContainerDetailModal: React.FC<ContainerDetailModalProps> = ({
   const rowStr = (container.row || '').padStart(2, '0');
   const tierStr = (container.tier || '').padStart(2, '0');
   const fullPositionStr = container.position || `${bayStr}${rowStr}${tierStr}`;
+
+  const { parsedContainers, validateStackingRules, podSequence, executeAdjustment } = useStowageStore();
+  const stackingViolations = validateStackingRules ? validateStackingRules(parsedContainers) : [];
+  const containerViolation = stackingViolations.find(
+    v => v.container40?.id === container.id || v.container20?.id === container.id
+  );
+
+  // Compute intelligent relocation candidates satisfying BOTH stacking and POD sequence rules
+  const searchResults = useMemo(() => {
+    return findStackingFixProposals(container, parsedContainers, podSequence || []);
+  }, [container, parsedContainers, podSequence]);
+
+  const handleApplyFix = (opt: RelocationCandidateOption) => {
+    if (!executeAdjustment) return;
+    const res = executeAdjustment(opt.adjustmentRequest);
+    if (res.success) {
+      setActionMessage(`✓ ${res.actionSummary}`);
+      setTimeout(() => {
+        setActionMessage(null);
+      }, 5000);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xs p-4 animate-fade-in font-sans">
@@ -73,6 +101,121 @@ export const ContainerDetailModal: React.FC<ContainerDetailModalProps> = ({
 
         {/* Content Body */}
         <div className="p-5 space-y-4 max-h-[80vh] overflow-y-auto">
+
+          {/* Action Success Toast */}
+          {actionMessage && (
+            <div className="bg-emerald-950/90 border border-emerald-500/80 rounded-xl p-3 text-emerald-200 font-mono text-xs flex items-center gap-2 shadow-md animate-fadeIn">
+              <Check className="w-5 h-5 text-emerald-400 shrink-0" />
+              <span className="font-bold">{actionMessage}</span>
+            </div>
+          )}
+
+          {/* Stacking Violation Alert Banner & Fix Stacking Button */}
+          {containerViolation && (
+            <div className="bg-red-950/90 border border-red-500/80 rounded-xl p-3.5 text-red-200 font-mono text-xs flex flex-col gap-2.5 shadow-lg">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2.5">
+                  <AlertOctagon className="w-5 h-5 text-red-400 flex-shrink-0 animate-pulse" />
+                  <div>
+                    <span className="font-bold text-red-300 block uppercase tracking-wider">
+                      ¡VIOLACIÓN DE REGLA DE ESTIBA DE CAMA!
+                    </span>
+                    <span className="text-[11px] text-red-200/90 leading-tight block mt-0.5">
+                      {containerViolation.message}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowFixPanel(!showFixPanel)}
+                  className="px-3 py-1.5 rounded-lg text-xs font-mono font-black bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 border border-amber-300 shadow-md transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+                >
+                  <Wrench className="w-4 h-4" />
+                  {showFixPanel ? 'OCULTAR SOLUCIONES' : 'SOLUCIONAR ESTIBA'}
+                </button>
+              </div>
+
+              {/* FIX STACKING INTERACTIVE PANEL */}
+              {showFixPanel && (
+                <div className="mt-2 pt-3 border-t border-red-800/80 space-y-3 bg-black/40 p-3 rounded-xl border border-amber-500/30">
+                  <div className="flex items-center justify-between">
+                    <span className="text-amber-300 font-extrabold flex items-center gap-1.5 uppercase text-[11px] tracking-wider">
+                      <Sparkles className="w-4 h-4 text-amber-400" /> ALTERNATIVAS DE REUBICACIÓN VALIDADAS
+                    </span>
+                    <span className="text-[10px] text-slate-400">
+                      {searchResults.options.length} OPCIÓN(ES)
+                    </span>
+                  </div>
+
+                  {/* CANDIDATE BAYS FILTER PILLS */}
+                  {searchResults.candidateBays.length > 0 ? (
+                    <div className="flex items-center gap-1.5 flex-wrap bg-slate-900/80 p-2 rounded-lg border border-slate-800">
+                      <span className="text-[10px] text-slate-400 font-bold">Bahías Candidatas Filtradas:</span>
+                      <button
+                        onClick={() => setSelectedBayFilter('ALL')}
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold cursor-pointer transition-colors ${selectedBayFilter === 'ALL' ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+                      >
+                        Todas ({searchResults.candidateBays.length})
+                      </button>
+                      {searchResults.candidateBays.map(bay => (
+                        <button
+                          key={bay}
+                          onClick={() => setSelectedBayFilter(bay)}
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold cursor-pointer transition-colors ${selectedBayFilter === bay ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+                        >
+                          Bahía {bay}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-[11px] text-amber-200/80 bg-amber-950/40 p-2 rounded border border-amber-500/20">
+                      No se hallaron bahías que satisfagan simultáneamente la regla de cama y la secuencia del puerto de descarga.
+                    </div>
+                  )}
+
+                  {/* CANDIDATE OPTIONS LIST */}
+                  <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                    {searchResults.options
+                      .filter(o => selectedBayFilter === 'ALL' || o.bay === selectedBayFilter)
+                      .map(opt => (
+                        <div
+                          key={opt.id}
+                          className="bg-[#081524] border border-cyan-500/40 hover:border-cyan-400 rounded-lg p-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-sm transition-all"
+                        >
+                          <div className="space-y-1 text-[11px]">
+                            <div className="flex items-center gap-2 font-bold text-cyan-300">
+                              <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                              <span>{opt.title}</span>
+                              <span className="bg-cyan-950 text-cyan-400 text-[9px] px-1.5 py-0.5 rounded border border-cyan-500/30">
+                                {opt.toPosition}
+                              </span>
+                            </div>
+                            <p className="text-slate-300 leading-tight text-[10.5px]">
+                              {opt.description}
+                            </p>
+                            <div className="flex items-center gap-2 text-[9.5px] text-emerald-400 font-mono">
+                              <span className="bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-500/30">
+                                ✓ Regla Cama OK
+                              </span>
+                              <span className="bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-500/30">
+                                ✓ Secuencia POD OK ({opt.pod})
+                              </span>
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={() => handleApplyFix(opt)}
+                            className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow transition-all cursor-pointer flex items-center justify-center gap-1 shrink-0"
+                          >
+                            <ArrowRight className="w-3.5 h-3.5" />
+                            APLICAR SOLUCIÓN
+                          </button>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           
           {/* Status & Type Pills Bar */}
           <div className="flex flex-wrap items-center gap-2 font-mono">

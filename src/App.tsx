@@ -15,8 +15,13 @@ import { MiniPlanProView } from './modules/MiniPlanProView';
 import { ManoMasLargaView } from './modules/ManoMasLargaView';
 import { MovimientosModuleView } from './modules/MovimientosModuleView';
 import { ManualAdjustmentEngineView } from './modules/ManualAdjustmentEngineView';
+import { AutoStowagePlannerView } from './modules/AutoStowagePlannerView';
 
 import { generateSampleBaplieContainers } from './core/parser/demoData';
+
+import appLogo from './assets/logo.jpg';
+
+import { ShareTransmitModal } from './components/common/ShareTransmitModal';
 
 import {
   Grid,
@@ -33,7 +38,10 @@ import {
   ChevronDown,
   BarChart3,
   Trophy,
-  Sliders
+  Sliders,
+  Zap,
+  Cast,
+  Tv
 } from 'lucide-react';
 
 export default function App() {
@@ -59,8 +67,10 @@ export default function App() {
     setContainers
   } = useStowageStore();
 
-  const [activeTab, setActiveTab] = useState<'estiba' | 'planos' | 'cuadre' | 'movins' | 'agents' | 'comparador' | 'miniplanpro' | 'movimientos' | 'manual-engine'>('estiba');
+  const [activeTab, setActiveTab] = useState<'estiba' | 'planos' | 'cuadre' | 'movins' | 'agents' | 'comparador' | 'miniplanpro' | 'movimientos' | 'manual-engine' | 'auto-excel'>('estiba');
+
   const [isManoMasLargaModalOpen, setIsManoMasLargaModalOpen] = useState<boolean>(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState<boolean>(false);
 
   // Load realistic demo BAPLIE + MOVINS if empty initially so user can test right away
   useEffect(() => {
@@ -103,11 +113,16 @@ export default function App() {
       <aside className="hidden md:flex w-16 flex-shrink-0 bg-[#0D1E30] border-r border-slate-800/80 flex-col items-center py-4 gap-3 z-40">
         {/* Brand Logo */}
         <div
-          className="text-cyan-400 mb-2 cursor-pointer hover:scale-110 transition-transform"
-          title="Terminal Planning Platform"
+          className="mb-2 cursor-pointer hover:scale-105 transition-transform group"
+          title="Terminal Planning Platform TOS"
           onClick={() => setActiveTab('estiba')}
         >
-          <Anchor className="w-6 h-6" />
+          <img
+            src={appLogo}
+            alt="Terminal Planning Platform Logo"
+            className="w-10 h-10 rounded-xl object-cover border border-cyan-500/50 shadow-[0_0_15px_rgba(0,229,255,0.4)] group-hover:border-cyan-400"
+            referrerPolicy="no-referrer"
+          />
         </div>
 
         {/* Navigation Items */}
@@ -208,6 +223,18 @@ export default function App() {
         </button>
 
         <button
+          onClick={() => setActiveTab('auto-excel')}
+          className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
+            activeTab === 'auto-excel'
+              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 shadow-[0_0_12px_rgba(16,185,129,0.4)]'
+              : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+          }`}
+          title="Estiba Automática desde Excel de Patio"
+        >
+          <Zap className="w-5 h-5 text-emerald-400" />
+        </button>
+
+        <button
           onClick={() => setActiveTab('comparador')}
           className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
             activeTab === 'comparador'
@@ -217,6 +244,16 @@ export default function App() {
           title="Comparador de Versiones BAPLIE"
         >
           <GitCompare className="w-5 h-5" />
+        </button>
+
+        <div className="w-6 h-[1px] bg-slate-800 my-1" />
+
+        <button
+          onClick={() => setIsShareModalOpen(true)}
+          className="w-10 h-10 rounded-lg bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 border border-cyan-500/50 flex items-center justify-center transition-all cursor-pointer shadow-[0_0_12px_rgba(0,229,255,0.3)] animate-pulse"
+          title="Transmitir Pantalla / Control Room TV & Share"
+        >
+          <Cast className="w-5 h-5 text-cyan-300" />
         </button>
       </aside>
 
@@ -297,16 +334,25 @@ export default function App() {
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden pb-14 md:pb-0">
         {/* Top Breadcrumb & Action Header */}
         <header className="flex-shrink-0 bg-[#0A1A29] border-b border-slate-800 px-3 md:px-5 py-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 z-30">
-          <div className="min-w-0">
-            <h1 className="font-mono text-xs sm:text-sm md:text-base font-extrabold text-white tracking-wider sm:tracking-widest uppercase flex items-center gap-1.5 sm:gap-2 truncate">
-              <span className="truncate">TERMINAL PLANNING PLATFORM</span>
-              <span className="text-[9px] sm:text-[10px] bg-red-600 text-white font-mono px-1.5 sm:px-2 py-0.5 rounded font-bold flex-shrink-0">
-                TOS V1.0
-              </span>
-            </h1>
-            <p className="text-[9px] sm:text-[10px] font-mono text-cyan-400 truncate">
-              EDI / BAPLIE / MOVINS · Reconciliación Inteligente
-            </p>
+          <div className="min-w-0 flex items-center gap-2.5">
+            <img
+              src={appLogo}
+              alt="Logo TOS"
+              className="w-9 h-9 rounded-xl object-cover border border-cyan-500/50 shadow-[0_0_12px_rgba(0,229,255,0.4)] shrink-0 cursor-pointer hover:scale-105 transition-transform"
+              onClick={() => setActiveTab('estiba')}
+              referrerPolicy="no-referrer"
+            />
+            <div className="min-w-0">
+              <h1 className="font-mono text-xs sm:text-sm md:text-base font-extrabold text-white tracking-wider sm:tracking-widest uppercase flex items-center gap-1.5 sm:gap-2 truncate">
+                <span className="truncate">TERMINAL PLANNING PLATFORM</span>
+                <span className="text-[9px] sm:text-[10px] bg-red-600 text-white font-mono px-1.5 sm:px-2 py-0.5 rounded font-bold flex-shrink-0">
+                  TOS V1.0
+                </span>
+              </h1>
+              <p className="text-[9px] sm:text-[10px] font-mono text-cyan-400 truncate">
+                EDI / BAPLIE / MOVINS · Reconciliación Inteligente
+              </p>
+            </div>
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-2.5 flex-wrap w-full sm:w-auto justify-start sm:justify-end overflow-x-auto pb-1 sm:pb-0">
@@ -395,6 +441,7 @@ export default function App() {
           {activeTab === 'miniplanpro' && <MiniPlanProView />}
           {activeTab === 'movimientos' && <MovimientosModuleView />}
           {activeTab === 'manual-engine' && <ManualAdjustmentEngineView />}
+          {activeTab === 'auto-excel' && <AutoStowagePlannerView />}
         </main>
       </div>
 
@@ -423,6 +470,13 @@ export default function App() {
       )}
       {/* Global Floating Voice Copilot (Available on all screens) */}
       <GlobalVoiceCopilot />
+
+      {/* Share & Screen Transmit Modal */}
+      <ShareTransmitModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        vesselName="MAERSK HOUSTON"
+      />
     </div>
   );
 }

@@ -19,10 +19,12 @@ export const EstibaMatrixView: React.FC = () => {
     fileName,
     setSelectedBay,
     setViewMode,
-    setSelectedContainer
+    setSelectedContainer,
+    validateStackingRules
   } = useStowageStore();
 
   const validationReport = parsedContainers.length > 0 ? validateBaplie(parsedContainers) : null;
+  const stackingViolations = validateStackingRules ? validateStackingRules(parsedContainers) : [];
 
   // Generate Section Bay list (Even 40' bays representing combined 20'/40' section)
   // E.g. Bay 02 covers 01, 02, 03; Bay 06 covers 05, 06, 07; etc.
@@ -81,6 +83,21 @@ export const EstibaMatrixView: React.FC = () => {
         activeTerminalKey={activeTerminalKey}
         fileName={fileName}
       />
+
+      {/* ── VISUAL STACKING RULE WARNING BANNER ── */}
+      {stackingViolations.length > 0 && (
+        <div className="bg-red-950/80 border border-red-500/80 rounded-xl p-3 text-red-200 font-mono text-xs flex flex-col gap-1.5 shadow-lg animate-fadeIn">
+          <div className="flex items-center gap-2 font-bold text-red-300">
+            <AlertOctagon className="w-4 h-4 text-red-400 animate-pulse flex-shrink-0" />
+            <span>¡ALERTA CRÍTICA DE ESTIBA! ({stackingViolations.length} {stackingViolations.length === 1 ? 'VIOLACIÓN' : 'VIOLACIONES'} DE CAMA DETECTADAS)</span>
+          </div>
+          {stackingViolations.map((v, idx) => (
+            <div key={idx} className="pl-6 text-[11px] text-red-200/90 leading-snug">
+              • {v.message}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Main Operational Workspace */}
       <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-[600px] overflow-hidden">

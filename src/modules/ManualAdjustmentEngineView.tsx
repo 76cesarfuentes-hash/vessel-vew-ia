@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useStowageStore } from '../core/stores/useStowageStore';
 import { Container } from '../core/models/container';
+import { validateContainerStackingRules } from '../core/business/adjustmentEngine';
 import {
   exportToBaplieEDI,
   exportToExcel
@@ -99,6 +100,11 @@ export function ManualAdjustmentEngineView() {
       setLocalContainers(parsedContainers.map(c => ({ ...c })));
     }
   }, [parsedContainers]);
+
+  // Compute container stacking rule violations (e.g. 40ft over single 20ft)
+  const stackingViolations = useMemo(() => {
+    return validateContainerStackingRules(localContainers);
+  }, [localContainers]);
 
   // Active Bay Section tab (20ft Fore, 40ft Center & 20ft Aft combined)
   const [activeBay, setActiveBay] = useState<string>('02');
@@ -1103,6 +1109,23 @@ export function ManualAdjustmentEngineView() {
         </div>
       </div>
 
+      {/* ── STACKING RULE VIOLATION BANNER ── */}
+      {stackingViolations.length > 0 && (
+        <div className="bg-red-950/90 border-2 border-red-500 rounded-xl p-3.5 text-red-200 font-mono text-xs flex flex-col gap-2 shadow-[0_0_20px_rgba(239,68,68,0.3)] animate-fadeIn">
+          <div className="flex items-center gap-2 font-bold text-red-300 text-sm">
+            <AlertTriangle className="w-5 h-5 text-red-400 animate-pulse flex-shrink-0" />
+            <span>ALERTA DE REGLAS DE ESTIBA: {stackingViolations.length} {stackingViolations.length === 1 ? 'VIOLACIÓN DETECTADA' : 'VIOLACIONES DETECTADAS'}</span>
+          </div>
+          <div className="space-y-1 pl-7">
+            {stackingViolations.map((v, i) => (
+              <p key={i} className="text-red-200/90 text-xs">
+                • <strong className="text-red-300">{v.type === '40_OVER_SINGLE_20' ? 'CAMA INCOMPLETA (40\' s/ 1x 20\')' : '20\' SOBRE 40\''}</strong>: {v.message}
+              </p>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ── VALIDATION BANNER ── */}
       {validationMsg && (
         <div
@@ -1804,15 +1827,15 @@ export function ManualAdjustmentEngineView() {
                 className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 {isComparing ? (
-                  <>
+                  <span className="flex items-center justify-center gap-2">
                     <RefreshCw className="w-4 h-4 animate-spin" />
                     <span>AUDITANDO CANTIDADES...</span>
-                  </>
+                  </span>
                 ) : (
-                  <>
+                  <span className="flex items-center justify-center gap-2">
                     <CheckCircle2 className="w-4 h-4" />
                     <span>EJECUTAR AUDITORÍA Y DETECTAR DIFERENCIAS</span>
-                  </>
+                  </span>
                 )}
               </button>
             )}

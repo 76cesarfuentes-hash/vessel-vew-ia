@@ -48,10 +48,10 @@ RESTRICCIÓN ABSOLUTA DE ÁMBITO Y EXCLUSIVIDAD:
 REGLAS DE AJUSTE DE ESTIBA (OBLIGATORIAS AL AJUSTAR / CANCELAR):
 - REGLA 1 (ESTRUTURA CRÍTICA): Jamás cargar contenedores de 20 pies sobre contenedores de 40 pies (20' sobre 40' es una violación ilegal).
 - REGLA 2 (SUSTITUCIÓN DE PROA): Las unidades que se cancelen deben ser sustituidas por unidades libres de las mismas características (mismo tamaño, tipo de carga y POD), dando PREFERENCIA a unidades de PROA (bahías inferiores ej. 01, 03, 05...).
-- REGLA 3 (REGLA CAMA 20'): Los contenedores de 20 pies siempre actúan en pares como cama para los de 40 pies. NUNCA dejar un solo contenedor de 20 pies aislado bajo una posición de 40 pies.
-  - Si se cancela un 20' y NO se encuentra sustituto 20':
-    - Si el 20' restante está en BODEGA (Tier < 80), moverlo a la CUBIERTA (Tier >= 80).
-    - Si está en CUBIERTA (Tier >= 80), colocarlo sobre otro contenedor de 20' o moverlo a un slot libre donde no genere restibas involuntarias.
+- REGLA 3 (REGLA CAMA 20' PARA SOPORTE DE 40'): Para poder colocar/estibar un contenedor de 40 pies sobre unidades de 20 pies, estas ÚNICAMENTE se pueden estibar si forman una CAMA COMPLETA DE 2 UNIDADES DE 20' (Par Proa y Popa). JAMÁS colocar una unidad de 40 pies sobre un solo contenedor de 20 pies.
+  - Si se cancela un 20' y NO se encuentra sustituto 20' para completar la cama de 2x 20':
+    - Si el 20' restante está en BODEGA (Tier < 80), moverlo a la CUBIERTA (Tier >= 80) para evitar que quede como un solo 20' aislado debajo de un 40'.
+    - Si está en CUBIERTA (Tier >= 80), colocarlo sobre otro contenedor de 20' o moverlo a un slot libre donde no genere restibas ni violaciones de cama incompleta.
 
 CAPACIDADES DE EJECUCIÓN Y REPORTES:
 - Puedes sugerir y ejecutar reportes (Resumen operacional, descarga/carga, restibas, BAPLIE vs MOVINS, IMO/DG, Reefers).
@@ -82,7 +82,7 @@ ${JSON.stringify(containers.slice(0, 35), null, 2)}
         try {
           const ai = new GoogleGenAI({ apiKey });
           const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-3.6-flash',
             contents: [
               { role: 'user', parts: [{ text: `${systemContext}\n\nPREGUNTA DEL PLANNER:\n${prompt}` }] }
             ]

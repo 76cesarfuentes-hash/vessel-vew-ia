@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BaplieHeaderInfo } from '../../core/parser/baplieParser';
 import { Container } from '../../core/models/container';
-import { Ship, Anchor, Calendar, Clock, MapPin, Navigation, Tag, Layers, Scale, Globe } from 'lucide-react';
+import { Ship, Anchor, Calendar, Clock, MapPin, Navigation, Tag, Layers, Scale, Globe, Tv, Share2, Cast } from 'lucide-react';
+import { ShareTransmitModal } from '../common/ShareTransmitModal';
+import appLogo from '../../assets/logo.jpg';
 
 interface DynamicVesselHeaderProps {
   baplieHeader?: BaplieHeaderInfo;
@@ -16,6 +18,7 @@ export const DynamicVesselHeader: React.FC<DynamicVesselHeaderProps> = ({
   activeTerminalKey,
   fileName
 }) => {
+  const [isShareModalOpen, setIsShareModalOpen] = useState<boolean>(false);
   // Determine vessel name from BAPLIE header or containers or default
   const rawVesselName = baplieHeader?.vesselName ||
     containers.find(c => c.operator && c.operator !== 'Dato no disponible')?.operator ||
@@ -226,10 +229,28 @@ export const DynamicVesselHeader: React.FC<DynamicVesselHeaderProps> = ({
               </span>
             </div>
 
-            <h2 className="text-lg md:text-xl font-black text-white font-mono tracking-wider truncate flex items-center gap-2">
-              <Ship className="w-5 h-5 text-cyan-400 flex-shrink-0" />
-              {vesselName}
-            </h2>
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <h2 className="text-lg md:text-xl font-black text-white font-mono tracking-wider truncate flex items-center gap-2">
+                <img
+                  src={appLogo}
+                  alt="TOS Logo"
+                  className="w-7 h-7 rounded-lg object-cover border border-cyan-400/60 shadow-[0_0_10px_rgba(0,229,255,0.4)] flex-shrink-0"
+                  referrerPolicy="no-referrer"
+                />
+                <Ship className="w-5 h-5 text-cyan-400 flex-shrink-0" />
+                {vesselName}
+              </h2>
+
+              {/* Share & Transmit to Screen Button */}
+              <button
+                onClick={() => setIsShareModalOpen(true)}
+                className="px-3 py-1.5 rounded-lg text-xs font-mono font-black bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-slate-950 border border-cyan-300 shadow-[0_0_15px_rgba(0,229,255,0.3)] transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+                title="Transmitir esta pantalla a un TV / Monitor de Control Room o Compartir Enlace"
+              >
+                <Cast className="w-4 h-4" />
+                <span>TRANSMITIR / SHARE</span>
+              </button>
+            </div>
 
             {/* EDI Specifications Line */}
             <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-2 text-[10.5px] font-mono">
@@ -349,6 +370,14 @@ export const DynamicVesselHeader: React.FC<DynamicVesselHeaderProps> = ({
         </div>
 
       </div>
+
+      {/* Share & Screen Transmission Modal */}
+      <ShareTransmitModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        vesselName={vesselName}
+        totalContainers={totalUnits}
+      />
     </div>
   );
 };

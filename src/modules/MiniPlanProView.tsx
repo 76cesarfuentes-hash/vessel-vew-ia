@@ -796,7 +796,7 @@ export const MiniPlanProView: React.FC = () => {
             </span>
             <div className="flex items-center gap-1.5 text-[10px] font-bold flex-wrap">
               {activeOperationView === 'DESCARGA' ? (
-                <>
+                <span className="contents">
                   <span className="px-2 py-0.5 rounded text-white font-mono flex items-center gap-1 shadow-xs" style={{ backgroundColor: IMPORT_ORANGE }}>
                     IMPORTACIÓN (NARANJA)
                   </span>
@@ -806,9 +806,9 @@ export const MiniPlanProView: React.FC = () => {
                   <span className="px-2 py-0.5 rounded text-white font-mono flex items-center gap-1 shadow-xs ring-1 ring-red-400 animate-pulse" style={{ backgroundColor: RESTOW_RED }}>
                     RESTIBA (ROJO)
                   </span>
-                </>
+                </span>
               ) : (
-                <>
+                <span className="contents">
                   <span className="px-2 py-0.5 rounded text-white font-mono flex items-center gap-1 shadow-xs" style={{ backgroundColor: getPortColor(activeTerminalKey) }}>
                     EXPORTACIÓN ({activeTerminalKey})
                   </span>
@@ -818,7 +818,7 @@ export const MiniPlanProView: React.FC = () => {
                   <span className="px-2 py-0.5 rounded text-white font-mono flex items-center gap-1 shadow-xs ring-1 ring-red-400 animate-pulse" style={{ backgroundColor: RESTOW_RED }}>
                     RESTIBA (ROJO)
                   </span>
-                </>
+                </span>
               )}
             </div>
           </div>

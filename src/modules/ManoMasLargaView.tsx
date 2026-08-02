@@ -1037,9 +1037,7 @@ export const ManoMasLargaView: React.FC<ManoMasLargaViewProps> = ({ onClose }) =
                               title={matchingCont ? `${matchingCont.containerNumber || 'CONT'} (${matchingCont.isoCode || '45G1'})` : `Celda Libre (Tier ${tier}, Row ${row})`}
                             >
                               {matchingCont ? (
-                                <>
-                                  <span className="truncate w-full text-center px-0.5">{matchingCont.containerNumber?.slice(-4) || '20FT'}</span>
-                                </>
+                                <span className="truncate w-full text-center px-0.5">{matchingCont.containerNumber?.slice(-4) || '20FT'}</span>
                               ) : (
                                 <span className="text-[8px] opacity-30">{row}</span>
                               )}
@@ -1086,9 +1084,7 @@ export const ManoMasLargaView: React.FC<ManoMasLargaViewProps> = ({ onClose }) =
                               title={matchingCont ? `${matchingCont.containerNumber || 'CONT'} (${matchingCont.isoCode || '22G1'})` : `Celda Libre (Tier ${tier}, Row ${row})`}
                             >
                               {matchingCont ? (
-                                <>
-                                  <span className="truncate w-full text-center px-0.5">{matchingCont.containerNumber?.slice(-4) || '40FT'}</span>
-                                </>
+                                <span className="truncate w-full text-center px-0.5">{matchingCont.containerNumber?.slice(-4) || '40FT'}</span>
                               ) : (
                                 <span className="text-[8px] opacity-30">{row}</span>
                               )}

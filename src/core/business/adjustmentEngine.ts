@@ -31,6 +31,110 @@ export interface AdjustmentResult {
   logs: string[];
 }
 
+export interface StackingRuleViolation {
+  type: '40_OVER_SINGLE_20' | '20_OVER_40';
+  container40?: Container;
+  container20?: Container;
+  position: string;
+  bay: string;
+  row: string;
+  tier: string;
+  message: string;
+  severity: 'CRÍTICO' | 'ALTO';
+}
+
+/**
+ * Validates container stacking rules across all containers:
+ * - Enforces that two 20ft containers must be placed underneath a 40ft container (40ft on single 20ft is ILLEGAL).
+ * - Enforces that 20ft containers cannot be placed over 40ft containers.
+ */
+export function validateContainerStackingRules(containers: Container[]): StackingRuleViolation[] {
+  const violations: StackingRuleViolation[] = [];
+
+  // 1. Check 40ft over single 20ft (bed rule)
+  const single20Violations = check40OverSingle20Violation(containers);
+  single20Violations.forEach(v => {
+    violations.push({
+      type: '40_OVER_SINGLE_20',
+      container40: v.container40,
+      container20: v.single20,
+      position: v.container40.position || `B${v.container40.bay}-R${v.container40.row}-T${v.container40.tier}`,
+      bay: v.container40.bay,
+      row: v.container40.row,
+      tier: v.container40.tier,
+      message: v.message,
+      severity: 'CRÍTICO'
+    });
+  });
+
+  // 2. Check 20ft over 40ft violations
+  const containers20 = containers.filter(c => c.size === 20);
+  containers20.forEach(c20 => {
+    const is20Over40 = check20Over40Violation(containers, {
+      bay: c20.bay,
+      row: c20.row,
+      tier: c20.tier
+    });
+    if (is20Over40) {
+      violations.push({
+        type: '20_OVER_40',
+        container20: c20,
+        position: c20.position || `B${c20.bay}-R${c20.row}-T${c20.tier}`,
+        bay: c20.bay,
+        row: c20.row,
+        tier: c20.tier,
+        message: `VIOLACIÓN ESTRUCTURAL: Contenedor de 20' ${c20.id} en Posición ${c20.position} está estibado sobre una unidad de 40' (Estiba ilegal 20' s/ 40').`,
+        severity: 'CRÍTICO'
+      });
+    }
+  });
+
+  return violations;
+}
+
+/**
+ * Validates whether a 40ft container is placed over a single 20ft container (ILLEGAL).
+ * A 40ft container requires exactly TWO 20ft containers (Fore and Aft pair) beneath it to form a valid bed.
+ */
+export function check40OverSingle20Violation(
+  containers: Container[]
+): Array<{ container40: Container; single20: Container; message: string }> {
+  const violations: Array<{ container40: Container; single20: Container; message: string }> = [];
+
+  const containers40 = containers.filter(c => c.size === 40 || c.size === 45);
+
+  containers40.forEach(c40 => {
+    const bay40Num = parseInt(c40.bay, 10);
+    const tier40Num = parseInt(c40.tier, 10);
+    const row40 = c40.row;
+
+    // Below tier
+    const tierBelow = tier40Num - 2;
+    if (tierBelow < 0) return;
+
+    // 20ft containers sit on odd bays adjacent to the 40ft bay (e.g. 40ft Bay 02 -> 20ft Bay 01 and Bay 03)
+    const foreBayStr = String(bay40Num - 1).padStart(2, '0');
+    const aftBayStr = String(bay40Num + 1).padStart(2, '0');
+
+    const units20Below = containers.filter(c =>
+      c.size === 20 &&
+      c.row === row40 &&
+      parseInt(c.tier, 10) === tierBelow &&
+      (c.bay === foreBayStr || c.bay === aftBayStr)
+    );
+
+    if (units20Below.length === 1) {
+      violations.push({
+        container40: c40,
+        single20: units20Below[0],
+        message: `VIOLACIÓN GRAVE: El contenedor de 40' ${c40.id} (Pos. ${c40.position}) está apoyado sobre un solo contenedor de 20' (${units20Below[0].id} en Pos. ${units20Below[0].position}). Se requieren 2 unidades de 20' (cama completa Proa/Popa) para cargar un 40'.`
+      });
+    }
+  });
+
+  return violations;
+}
+
 /**
  * Validates whether a 20ft container is being placed over a 40ft container (ILLEGAL).
  */
@@ -254,6 +358,57 @@ export function executeStowageAdjustment(
       updatedContainers,
       cancelledContainer: target,
       relocatedPartner20: relocatedPartnerInfo,
+      ruleChecks,
+      logs
+    };
+  }
+
+  if (request.type === 'MOVE_CONTAINER') {
+    const target = updatedContainers.find(c => c.id.toUpperCase() === (request.containerId || '').toUpperCase());
+    if (!target || !request.targetPosition) {
+      return {
+        success: false,
+        actionSummary: `No se pudo encontrar el contenedor ${request.containerId} o la posición de destino no es válida.`,
+        updatedContainers,
+        ruleChecks,
+        logs: [`Error: Contenedor ${request.containerId} no hallado o posición de destino vacía.`]
+      };
+    }
+
+    const posClean = request.targetPosition.replace(/[^0-9]/g, '');
+    let newBay = target.bay;
+    let newRow = target.row;
+    let newTier = target.tier;
+
+    if (posClean.length >= 6) {
+      newBay = posClean.slice(0, 2);
+      newRow = posClean.slice(2, 4);
+      newTier = posClean.slice(4, 6);
+    } else {
+      const parts = request.targetPosition.match(/B(\d+)-R(\d+)-T(\d+)/i);
+      if (parts) {
+        newBay = parts[1].padStart(2, '0');
+        newRow = parts[2].padStart(2, '0');
+        newTier = parts[3].padStart(2, '0');
+      }
+    }
+
+    const updatedTarget: Container = {
+      ...target,
+      bay: newBay,
+      row: newRow,
+      tier: newTier,
+      position: request.targetPosition
+    };
+
+    updatedContainers = updatedContainers.map(c => c.id === target.id ? updatedTarget : c);
+
+    logs.push(`Reubicación de estiba completada: Contenedor ${target.id} reubicado de ${target.position} a ${request.targetPosition}.`);
+
+    return {
+      success: true,
+      actionSummary: `Contenedor ${target.id} reubicado exitosamente a la posición ${request.targetPosition}.`,
+      updatedContainers,
       ruleChecks,
       logs
     };

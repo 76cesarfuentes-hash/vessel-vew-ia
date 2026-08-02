@@ -38,82 +38,100 @@ export const GlobalVoiceCopilot: React.FC = () => {
   }>>([
     {
       role: 'system',
-      text: '🎙 AGENTE DE VOZ TOS ESPECIALIZADO LISTO.\n• Hable o escriba para consultar el buque, ejecutar reportes o realizar ajustes de estiba.\n• Cumple estrictamente las reglas marítimas (No 20\' s/ 40\', Sustitución en Proa, Cama de 20\').',
+      text: '🎙 AGENTE DE VOZ TOS ESPECIALIZADO LISTO.\n• Hable o escriba para consultar el buque, ejecutar reportes o realizar ajustes de estiba.\n• Cumple strictly las reglas marítimas (No 20\' s/ 40\', Sustitución en Proa, Cama de 20\').',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
 
   const recognitionRef = useRef<any>(null);
   const chatBottomRef = useRef<HTMLDivElement>(null);
+  const transcriptRef = useRef<string>('');
 
-  // Initialize Speech Recognition if supported in browser
+  // Keep transcriptRef in sync
   useEffect(() => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = true;
-      recognition.lang = 'es-ES';
+    transcriptRef.current = transcript;
+  }, [transcript]);
 
-      recognition.onstart = () => {
-        setIsListening(true);
-      };
+  // Initialize Speech Recognition once on mount if supported in browser
+  useEffect(() => {
+    try {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.lang = 'es-ES';
 
-      recognition.onresult = (event: any) => {
-        let currentTranscript = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          currentTranscript += event.results[i][0].transcript;
-        }
-        setTranscript(currentTranscript);
-        setPromptInput(currentTranscript);
-      };
+        recognition.onstart = () => {
+          setIsListening(true);
+        };
 
-      recognition.onerror = (event: any) => {
-        console.warn('Speech recognition error:', event.error);
-        setIsListening(false);
-      };
+        recognition.onresult = (event: any) => {
+          let currentTranscript = '';
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            currentTranscript += event.results[i][0].transcript;
+          }
+          setTranscript(currentTranscript);
+          setPromptInput(currentTranscript);
+        };
 
-      recognition.onend = () => {
-        setIsListening(false);
-        // If transcript exists, automatically submit voice command
-        if (transcript.trim()) {
-          const textSubmitted = transcript;
-          setTranscript('');
-          handleSendPrompt(textSubmitted);
-        }
-      };
+        recognition.onerror = (event: any) => {
+          console.warn('Speech recognition error:', event.error);
+          setIsListening(false);
+        };
 
-      recognitionRef.current = recognition;
+        recognition.onend = () => {
+          setIsListening(false);
+          const currentT = transcriptRef.current;
+          if (currentT && currentT.trim()) {
+            const textSubmitted = currentT;
+            setTranscript('');
+            handleSendPrompt(textSubmitted);
+          }
+        };
+
+        recognitionRef.current = recognition;
+      }
+    } catch (err) {
+      console.warn('Speech recognition initialization error:', err);
     }
-  }, [transcript, filteredContainers]);
+  }, []);
 
   // Scroll to bottom of chat on new messages
   useEffect(() => {
     if (isOpen) {
-      chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+      try {
+        chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+      } catch (e) {
+        // ignore
+      }
     }
   }, [chatMessages, isOpen]);
 
   // Text-To-Speech function
   const speakText = (text: string) => {
-    if (!speechEnabled || !('speechSynthesis' in window)) return;
+    if (!speechEnabled || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
 
-    window.speechSynthesis.cancel(); // Stop prior speech
-    // Clean markdown code blocks or json for speech
-    const cleanSpeech = text
-      .replace(/```[\s\S]*?```/g, '')
-      .replace(/[*#_`]/g, '')
-      .substring(0, 300); // Limit speech length for clarity
+    try {
+      window.speechSynthesis.cancel(); // Stop prior speech
+      const cleanSpeech = text
+        .replace(/```[\s\S]*?```/g, '')
+        .replace(/[*#_`]/g, '')
+        .substring(0, 300); // Limit speech length for clarity
 
-    const utterance = new SpeechSynthesisUtterance(cleanSpeech);
-    utterance.lang = 'es-ES';
-    utterance.rate = 1.05;
+      const utterance = new SpeechSynthesisUtterance(cleanSpeech);
+      utterance.lang = 'es-ES';
+      utterance.rate = 1.05;
 
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => setIsSpeaking(false);
 
-    window.speechSynthesis.speak(utterance);
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      console.warn('SpeechSynthesis error:', e);
+      setIsSpeaking(false);
+    }
   };
 
   const toggleMic = () => {
@@ -122,13 +140,20 @@ export const GlobalVoiceCopilot: React.FC = () => {
       return;
     }
 
-    if (isListening) {
-      recognitionRef.current.stop();
-    } else {
-      window.speechSynthesis.cancel();
-      setTranscript('');
-      setPromptInput('');
-      recognitionRef.current.start();
+    try {
+      if (isListening) {
+        recognitionRef.current.stop();
+      } else {
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+        }
+        setTranscript('');
+        setPromptInput('');
+        recognitionRef.current.start();
+      }
+    } catch (err) {
+      console.warn('Toggle mic error:', err);
+      setIsListening(false);
     }
   };
 
@@ -201,7 +226,7 @@ export const GlobalVoiceCopilot: React.FC = () => {
   };
 
   return (
-    <>
+    <div className="global-voice-copilot-root">
       {/* ── FLOATING LAUNCHER BUTTON (Available globally on all screens) ── */}
       {!isOpen && (
         <button
@@ -301,7 +326,7 @@ export const GlobalVoiceCopilot: React.FC = () => {
               </button>
             </div>
           ) : (
-            <>
+            <div className="flex flex-col flex-1 overflow-hidden">
               {/* Chat Message Scrollable Container */}
               <div className="flex-1 overflow-y-auto p-3 space-y-3 font-mono text-xs text-slate-200">
                 {chatMessages.map((msg, idx) => (
@@ -406,10 +431,10 @@ export const GlobalVoiceCopilot: React.FC = () => {
                   <Send className="w-4 h-4" />
                 </button>
               </div>
-            </>
+            </div>
           )}
         </div>
       )}
-    </>
+    </div>
   );
 };

@@ -1,6 +1,7 @@
 import React from 'react';
 import { TERMINAL_PROFILES } from '../../core/models/terminal';
 import { Anchor, ShieldCheck, X } from 'lucide-react';
+import appLogo from '../../assets/logo.jpg';
 
 interface TerminalGateModalProps {
   isOpen: boolean;
@@ -31,8 +32,13 @@ export const TerminalGateModal: React.FC<TerminalGateModalProps> = ({
         )}
 
         {/* Header Icon */}
-        <div className="mx-auto w-16 h-16 bg-cyan-950/60 border border-cyan-500/50 rounded-full flex items-center justify-center mb-4 text-cyan-400">
-          <Anchor className="w-8 h-8" />
+        <div className="mx-auto w-20 h-20 mb-4 flex items-center justify-center">
+          <img
+            src={appLogo}
+            alt="Logo TOS"
+            className="w-20 h-20 rounded-2xl object-cover border-2 border-cyan-400/80 shadow-[0_0_25px_rgba(0,229,255,0.4)]"
+            referrerPolicy="no-referrer"
+          />
         </div>
 
         <h2 className="text-xl font-bold font-mono text-white tracking-widest uppercase mb-2">
