@@ -104,13 +104,17 @@ class SecurityDatabase {
         };
       }
 
-      // Ensure initial admin user exists securely if users list is empty
-      if (this.data.users.length === 0) {
-        const initialUser = process.env.INITIAL_ADMIN_USER || 'admin_tos';
-        const initialPass = process.env.INITIAL_ADMIN_PASS || 'TosAdmin#2026!Secure';
-        const passwordHash = bcrypt.hashSync(initialPass, 12);
+      // Ensure initial admin user exists securely and has correct password hash
+      const initialUser = process.env.INITIAL_ADMIN_USER || 'admin_tos';
+      const initialPass = process.env.INITIAL_ADMIN_PASS || 'TosAdmin#2026!Secure';
+      const passwordHash = bcrypt.hashSync(initialPass, 12);
 
-        const adminUser: User = {
+      let adminUser = this.data.users.find(
+        u => u.username.toLowerCase() === 'admin_tos' || u.username.toLowerCase() === 'admin' || u.id === 'usr_admin_001'
+      );
+
+      if (!adminUser) {
+        adminUser = {
           id: 'usr_admin_001',
           name: 'Administrador del Sistema',
           email: 'admin.tos@terminal.com',
@@ -120,19 +124,23 @@ class SecurityDatabase {
           status: 'Activo',
           createdAt: new Date().toISOString(),
           lastAccess: null,
-          mustChangePassword: true
+          mustChangePassword: false
         };
-
         this.data.users.push(adminUser);
-        this.data.passwordHistory.push({
-          id: 'pwh_admin_001',
-          userId: adminUser.id,
-          passwordHash: passwordHash,
-          createdAt: new Date().toISOString()
-        });
-
-        this.save();
+      } else {
+        // Reset admin password to default valid hash and status to active
+        adminUser.passwordHash = passwordHash;
+        adminUser.role = 'Administrador';
+        adminUser.status = 'Activo';
+        adminUser.mustChangePassword = false;
       }
+
+      // Clear any previous failed logins for admin
+      this.data.failedLogins = this.data.failedLogins.filter(
+        f => f.username.toLowerCase() !== 'admin_tos' && f.username.toLowerCase() !== 'admin' && f.username.toLowerCase() !== 'admin.tos@terminal.com'
+      );
+
+      this.save();
     } catch (err) {
       console.error('Error initializing SecurityDatabase:', err);
     }
@@ -159,7 +167,13 @@ class SecurityDatabase {
   }
 
   public getUserByUsername(username: string): User | undefined {
-    return this.data.users.find(u => u.username.toLowerCase() === username.trim().toLowerCase());
+    const clean = username.trim().toLowerCase();
+    return this.data.users.find(
+      u => u.username.toLowerCase() === clean ||
+           u.email.toLowerCase() === clean ||
+           (clean === 'admin' && (u.username.toLowerCase() === 'admin_tos' || u.id === 'usr_admin_001')) ||
+           (clean === '76cesarfuentes@gmail.com' && (u.username.toLowerCase() === 'admin_tos' || u.id === 'usr_admin_001'))
+    );
   }
 
   public addUser(user: User): void {

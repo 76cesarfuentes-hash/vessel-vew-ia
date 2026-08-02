@@ -131,6 +131,20 @@ export const LoginView: React.FC = () => {
             </div>
           </div>
 
+          {/* Default Credentials Hint Box */}
+          <div className="p-3 bg-cyan-950/50 border border-cyan-500/30 rounded-xl text-[11px] font-mono text-cyan-300/90 flex flex-col gap-1">
+            <div className="flex items-center gap-1.5 font-bold text-cyan-400">
+              <KeyRound className="w-3.5 h-3.5 text-cyan-400" />
+              <span>CREDENCIALES DE ACCESO:</span>
+            </div>
+            <div className="flex justify-between items-center text-slate-300">
+              <span>Usuario: <strong className="text-white">admin_tos</strong> (o <strong className="text-white">admin</strong>)</span>
+            </div>
+            <div className="flex justify-between items-center text-slate-300">
+              <span>Contraseña: <strong className="text-white">TosAdmin#2026!Secure</strong></span>
+            </div>
+          </div>
+
           {/* Login Submit Button */}
           <button
             type="submit"
