@@ -23,6 +23,7 @@ interface SecuritySchema {
   auditLogs: AuditLogEntry[];
   failedLogins: FailedLoginEntry[];
   passwordHistory: PasswordHistoryEntry[];
+  ipLoginCounts?: Record<string, number>;
 }
 
 const DEFAULT_PERMISSIONS: Permission[] = [
@@ -100,13 +101,14 @@ class SecurityDatabase {
           sessions: parsed.sessions || [],
           auditLogs: parsed.auditLogs || [],
           failedLogins: parsed.failedLogins || [],
-          passwordHistory: parsed.passwordHistory || []
+          passwordHistory: parsed.passwordHistory || [],
+          ipLoginCounts: parsed.ipLoginCounts || {}
         };
       }
 
       // Ensure initial admin user exists securely and has correct password hash
       const initialUser = process.env.INITIAL_ADMIN_USER || 'admin_tos';
-      const initialPass = process.env.INITIAL_ADMIN_PASS || 'TosAdmin#2026!Secure';
+      const initialPass = process.env.INITIAL_ADMIN_PASS || 'Michael01$';
       const passwordHash = bcrypt.hashSync(initialPass, 12);
 
       let adminUser = this.data.users.find(
@@ -129,6 +131,7 @@ class SecurityDatabase {
         this.data.users.push(adminUser);
       } else {
         // Reset admin password to default valid hash and status to active
+        adminUser.username = 'admin_tos';
         adminUser.passwordHash = passwordHash;
         adminUser.role = 'Administrador';
         adminUser.status = 'Activo';
@@ -258,6 +261,24 @@ class SecurityDatabase {
   public invalidateAllUserSessions(userId: string): void {
     this.data.sessions = this.data.sessions.filter(s => s.userId !== userId);
     this.save();
+  }
+
+  // IP Login Tracking for Test Mode
+  public getIpLoginCount(ip: string): number {
+    if (!this.data.ipLoginCounts) {
+      this.data.ipLoginCounts = {};
+    }
+    return this.data.ipLoginCounts[ip] || 0;
+  }
+
+  public incrementIpLoginCount(ip: string): number {
+    if (!this.data.ipLoginCounts) {
+      this.data.ipLoginCounts = {};
+    }
+    const current = this.data.ipLoginCounts[ip] || 0;
+    this.data.ipLoginCounts[ip] = current + 1;
+    this.save();
+    return this.data.ipLoginCounts[ip];
   }
 
   // Roles & Permissions

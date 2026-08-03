@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../core/security/AuthContext';
+import { useLanguage } from '../../core/i18n/LanguageContext';
+import { ContactModal } from '../common/ContactModal';
 import { ForcePasswordChangeModal } from './ForcePasswordChangeModal';
 import { UserManagementModal } from './UserManagementModal';
 import { AuditLogsModal } from './AuditLogsModal';
@@ -10,14 +12,17 @@ import {
   Users,
   FileText,
   LogOut,
-  ChevronDown
+  Headphones,
+  Globe
 } from 'lucide-react';
 
 export const UserSecurityBar: React.FC = () => {
-  const { user, logout, hasPermission } = useAuth();
+  const { user, logout, hasPermission, testModeWarning } = useAuth();
+  const { language, setLanguage, t } = useLanguage();
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState<boolean>(false);
   const [isUserMgmtOpen, setIsUserMgmtOpen] = useState<boolean>(false);
   const [isAuditLogsOpen, setIsAuditLogsOpen] = useState<boolean>(false);
+  const [isContactOpen, setIsContactOpen] = useState<boolean>(false);
 
   if (!user) return null;
 
@@ -30,7 +35,7 @@ export const UserSecurityBar: React.FC = () => {
 
   return (
     <>
-      <div className="flex items-center gap-2 bg-[#050E1A]/90 border border-cyan-500/40 rounded-xl px-2.5 py-1 text-xs font-mono shadow-inner">
+      <div className="flex items-center gap-1.5 bg-[#050E1A]/90 border border-cyan-500/40 rounded-xl px-2 py-1 text-xs font-mono shadow-inner flex-wrap">
         {/* User Info & Role Badge */}
         <div className="flex items-center gap-2 pr-2 border-r border-cyan-500/30">
           <div className="w-6 h-6 rounded-lg bg-cyan-950 border border-cyan-400/80 flex items-center justify-center text-cyan-300 text-[10px] font-black">
@@ -47,6 +52,26 @@ export const UserSecurityBar: React.FC = () => {
 
         {/* Action Buttons */}
         <div className="flex items-center gap-1">
+          {/* Contact Support Button */}
+          <button
+            onClick={() => setIsContactOpen(true)}
+            className="p-1.5 sm:px-2 sm:py-1 bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-500/50 rounded-lg flex items-center gap-1 transition-all cursor-pointer shadow"
+            title="Contacto y Soporte Técnico (Email / Teléfono)"
+          >
+            <Headphones className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden md:inline text-[10px] font-bold">{t('contactUs', 'CONTACTO')}</span>
+          </button>
+
+          {/* Language Switcher Button */}
+          <button
+            onClick={() => setLanguage(language === 'es' ? 'en' : 'es')}
+            className="p-1.5 sm:px-2 sm:py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 rounded-lg flex items-center gap-1 transition-all cursor-pointer"
+            title="Cambiar Idioma / Switch Language"
+          >
+            <Globe className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="text-[10px] font-bold">{language === 'es' ? '🇲🇽 ESP' : '🇺🇸 ENG'}</span>
+          </button>
+
           {/* User Management Button (RBAC: MANAGE_USERS) */}
           {hasPermission('MANAGE_USERS') && (
             <button
@@ -88,10 +113,13 @@ export const UserSecurityBar: React.FC = () => {
             title="Cerrar Sesión Segura"
           >
             <LogOut className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline text-[10px] font-black">SALIR</span>
+            <span className="hidden sm:inline text-[10px] font-black">{t('logoutBtn', 'SALIR')}</span>
           </button>
         </div>
       </div>
+
+      {/* Contact Modal */}
+      <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
 
       {/* Force / Change Password Modal */}
       {isPasswordModalOpen && (

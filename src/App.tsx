@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useStowageStore } from './core/stores/useStowageStore';
 import { useAuth } from './core/security/AuthContext';
+import { useLanguage } from './core/i18n/LanguageContext';
 import { LoginView } from './components/security/LoginView';
 import { ForcePasswordChangeModal } from './components/security/ForcePasswordChangeModal';
 import { UserSecurityBar } from './components/security/UserSecurityBar';
@@ -53,7 +54,8 @@ import {
 } from 'lucide-react';
 
 export default function App() {
-  const { isAuthenticated, isLoading, user, logClientAudit } = useAuth();
+  const { isAuthenticated, isLoading, user, testModeWarning, logClientAudit } = useAuth();
+  const { t } = useLanguage();
 
   const {
     parsedContainers,
@@ -387,6 +389,17 @@ export default function App() {
 
       {/* ── MAIN LAYOUT SHELL ── */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden pb-14 md:pb-0">
+        {/* Test Mode Warning Banner */}
+        {testModeWarning && (
+          <div className="bg-amber-950/90 border-b border-amber-500/50 px-4 py-1.5 text-amber-200 text-xs font-mono flex items-center justify-between gap-2 z-40 animate-fadeIn">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+              <span>{testModeWarning}</span>
+            </div>
+            <span className="text-[10px] text-amber-400 uppercase font-bold">Modo Prueba 5 Acceso IP</span>
+          </div>
+        )}
+
         {/* Top Breadcrumb & Action Header */}
         <header className="flex-shrink-0 bg-[#0A1A29] border-b border-slate-800 px-3 md:px-5 py-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 z-30">
           <div className="min-w-0 flex items-center gap-2.5">

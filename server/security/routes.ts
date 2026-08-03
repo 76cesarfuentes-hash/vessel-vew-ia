@@ -39,6 +39,15 @@ securityRouter.post('/auth/login', async (req: AuthenticatedRequest, res: Respon
 
   const cleanUsername = username.trim();
 
+  // Test mode check: max 5 logins allowed per IP
+  const currentIpCount = db.getIpLoginCount(ip);
+  if (currentIpCount >= 5) {
+    logAudit('SYSTEM', cleanUsername, 'Consulta', 'LOGIN', 'BLOCKED', ip, userAgent, 'Límite de modo de prueba (5 ingresos por IP) alcanzado.');
+    return res.status(429).json({
+      error: 'MODO DE PRUEBA EXCEDIDO: Esta dirección IP ya ha ingresado el límite de 5 veces permitido en modo de prueba. Para licencias de producción o accesos ilimitados contacte al soporte.'
+    });
+  }
+
   // Check lockout / brute force attempts (5 failed attempts within 15 mins)
   const recentFailures = db.getFailedLogins(cleanUsername);
   if (recentFailures.length >= 5) {
@@ -82,6 +91,9 @@ securityRouter.post('/auth/login', async (req: AuthenticatedRequest, res: Respon
   user.lastAccess = new Date().toISOString();
   db.updateUser(user);
 
+  const newIpCount = db.incrementIpLoginCount(ip);
+  const remainingLogins = 5 - newIpCount;
+
   const sessionId = `sess_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
   const expiresAt = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString();
 
@@ -104,12 +116,13 @@ securityRouter.post('/auth/login', async (req: AuthenticatedRequest, res: Respon
     maxAge: 8 * 60 * 60 * 1000 // 8 hours
   });
 
-  logAudit(user.id, user.username, user.role, 'LOGIN', 'SUCCESS', ip, userAgent, 'Inicio de sesión exitoso.');
+  logAudit(user.id, user.username, user.role, 'LOGIN', 'SUCCESS', ip, userAgent, `Inicio de sesión exitoso. Ingreso de prueba ${newIpCount}/5 para IP ${ip}.`);
 
   return res.json({
     message: 'Autenticación exitosa',
     token,
-    user: sanitizeUser(user)
+    user: sanitizeUser(user),
+    testModeWarning: `ADVERTENCIA MODO PRUEBA: Esta dirección IP ha ingresado ${newIpCount} de 5 veces permitidas. Le quedan ${remainingLogins} ingreso(s).`
   });
 });
 

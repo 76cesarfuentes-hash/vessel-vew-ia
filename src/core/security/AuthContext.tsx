@@ -5,6 +5,8 @@ interface AuthContextType {
   user: UserProfile | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  testModeWarning: string | null;
+  setTestModeWarning: (msg: string | null) => void;
   login: (username: string, password: string) => Promise<{ success: boolean; error?: string; mustChangePassword?: boolean }>;
   logout: () => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
@@ -20,6 +22,7 @@ const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes in milliseconds
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [testModeWarning, setTestModeWarning] = useState<string | null>(null);
 
   // Check auth session on load
   const refreshProfile = async () => {
@@ -90,6 +93,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       if (data.token) {
         localStorage.setItem('tos_auth_token', data.token);
+      }
+
+      if (data.testModeWarning) {
+        setTestModeWarning(data.testModeWarning);
       }
 
       setUser(data.user);
@@ -178,6 +185,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         user,
         isAuthenticated: !!user,
         isLoading,
+        testModeWarning,
+        setTestModeWarning,
         login,
         logout,
         changePassword,
