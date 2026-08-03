@@ -22,6 +22,7 @@ import { ManoMasLargaView } from './modules/ManoMasLargaView';
 import { MovimientosModuleView } from './modules/MovimientosModuleView';
 import { ManualAdjustmentEngineView } from './modules/ManualAdjustmentEngineView';
 import { AutoStowagePlannerView } from './modules/AutoStowagePlannerView';
+import { TongaPatioChessSimView } from './modules/TongaPatioChessSimView';
 
 import { generateSampleBaplieContainers } from './core/parser/demoData';
 
@@ -51,7 +52,9 @@ import {
   Zap,
   Cast,
   Tv,
-  ShieldCheck
+  ShieldCheck,
+  Crown,
+  Truck
 } from 'lucide-react';
 
 export default function App() {
@@ -80,7 +83,7 @@ export default function App() {
     setContainers
   } = useStowageStore();
 
-  const [activeTab, setActiveTab] = useState<'estiba' | 'planos' | 'cuadre' | 'movins' | 'agents' | 'comparador' | 'miniplanpro' | 'movimientos' | 'manual-engine' | 'auto-excel'>('estiba');
+  const [activeTab, setActiveTab] = useState<'estiba' | 'planos' | 'cuadre' | 'movins' | 'agents' | 'comparador' | 'miniplanpro' | 'movimientos' | 'manual-engine' | 'auto-excel' | 'tonga-patio'>('estiba');
 
   const [isManoMasLargaModalOpen, setIsManoMasLargaModalOpen] = useState<boolean>(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState<boolean>(false);
@@ -282,6 +285,18 @@ export default function App() {
         </button>
 
         <button
+          onClick={() => setActiveTab('tonga-patio')}
+          className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
+            activeTab === 'tonga-patio'
+              ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50 shadow-[0_0_12px_rgba(245,158,11,0.4)]'
+              : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+          }`}
+          title="Tonga de Patio: Simulación por Carril, Tira, Altura y Reglas de Ajedrez"
+        >
+          <Crown className="w-5 h-5 text-amber-400" />
+        </button>
+
+        <button
           onClick={() => setActiveTab('auto-excel')}
           className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
             activeTab === 'auto-excel'
@@ -376,6 +391,16 @@ export default function App() {
         >
           <Ship className="w-4 h-4 mb-0.5 text-amber-400" />
           <span>Pro</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('tonga-patio')}
+          className={`flex flex-col items-center justify-center flex-1 py-1 px-0.5 rounded text-[10px] font-mono transition-all ${
+            activeTab === 'tonga-patio' ? 'text-amber-400 font-bold bg-amber-950/60' : 'text-slate-400'
+          }`}
+        >
+          <Crown className="w-4 h-4 mb-0.5 text-amber-400" />
+          <span>Tonga</span>
         </button>
 
         <button
@@ -534,6 +559,7 @@ export default function App() {
           {activeTab === 'movimientos' && <MovimientosModuleView />}
           {activeTab === 'manual-engine' && <ManualAdjustmentEngineView />}
           {activeTab === 'auto-excel' && <AutoStowagePlannerView />}
+          {activeTab === 'tonga-patio' && <TongaPatioChessSimView />}
         </main>
       </div>
 

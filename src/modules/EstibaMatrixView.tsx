@@ -75,7 +75,7 @@ export const EstibaMatrixView: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full gap-3 overflow-y-auto pr-1">
+    <div className="flex flex-col h-full gap-3 overflow-hidden pr-1">
       {/* ── TOP DYNAMIC CONTAINER SHIP HEADER ── */}
       <DynamicVesselHeader
         baplieHeader={baplieHeader}
@@ -100,7 +100,7 @@ export const EstibaMatrixView: React.FC = () => {
       )}
 
       {/* Main Operational Workspace */}
-      <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-[600px] overflow-hidden">
+      <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0 overflow-hidden">
         
         {/* Left Sidebar: Unified Bay Section Selector & Dynamic POD Legend */}
         <div className="lg:w-64 flex flex-col gap-3 flex-shrink-0">

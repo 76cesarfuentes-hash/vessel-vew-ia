@@ -142,9 +142,9 @@ export const SimultaneousCrossSectionMatrix: React.FC<SimultaneousCrossSectionMa
           const has20 = !!c20Fore || !!c20Aft;
 
           return (
-            <td key={row} className="p-1 text-center align-middle border border-slate-900/60 bg-[#02050B]">
+            <td key={row} className="p-1 sm:p-1.5 text-center align-middle border border-slate-900/70 bg-[#02050B]">
               {/* Stacked Unified Cell: 40' ON TOP, 20' DIRECTLY UNDERNEATH */}
-              <div className="flex flex-col items-center gap-0.5 p-0.5 min-w-[56px]">
+              <div className="flex flex-col items-center gap-1 p-0.5 min-w-[64px] sm:min-w-[72px]">
                 
                 {/* 40' CONTAINER (TOP LAYER) */}
                 <div className="w-full flex justify-center">
@@ -155,17 +155,17 @@ export const SimultaneousCrossSectionMatrix: React.FC<SimultaneousCrossSectionMa
                       onClick={() => onSelectContainer(c40)}
                     />
                   ) : (
-                    <div className="w-12 h-6 md:w-14 md:h-7 bg-[#050A14] border border-dashed border-purple-500/30 rounded-xs flex items-center justify-center text-[7.5px] font-mono text-purple-400/40">
+                    <div className="w-13 h-6 md:w-16 md:h-8 bg-[#050A14] border border-dashed border-purple-500/35 rounded-xs flex items-center justify-center text-[8px] font-mono font-bold text-purple-400/50">
                       40' VACÍO
                     </div>
                   )}
                 </div>
 
                 {/* DIVIDER LINE BETWEEN 40' AND 20' */}
-                <div className="w-full h-[1px] bg-cyan-500/20 my-0.5" />
+                <div className="w-full h-[1px] bg-cyan-500/25 my-0.5" />
 
                 {/* 20' CONTAINERS (BOTTOM LAYER: FORE / AFT) */}
-                <div className="w-full flex items-center justify-center gap-0.5">
+                <div className="w-full flex items-center justify-center gap-1">
                   {c20Fore ? (
                     <div className="flex-1 min-w-0">
                       <ContainerBox
@@ -176,7 +176,7 @@ export const SimultaneousCrossSectionMatrix: React.FC<SimultaneousCrossSectionMa
                       />
                     </div>
                   ) : (
-                    <div className="flex-1 h-6 bg-[#050A14] border border-dashed border-cyan-500/20 rounded-xs flex items-center justify-center text-[7px] font-mono text-cyan-400/40">
+                    <div className="flex-1 h-6 md:h-7 bg-[#050A14] border border-dashed border-cyan-500/25 rounded-xs flex items-center justify-center text-[7.5px] font-mono font-bold text-cyan-400/50">
                       20'F
                     </div>
                   )}
@@ -191,7 +191,7 @@ export const SimultaneousCrossSectionMatrix: React.FC<SimultaneousCrossSectionMa
                       />
                     </div>
                   ) : (
-                    <div className="flex-1 h-6 bg-[#050A14] border border-dashed border-cyan-500/20 rounded-xs flex items-center justify-center text-[7px] font-mono text-cyan-400/40">
+                    <div className="flex-1 h-6 md:h-7 bg-[#050A14] border border-dashed border-cyan-500/25 rounded-xs flex items-center justify-center text-[7.5px] font-mono font-bold text-cyan-400/50">
                       20'A
                     </div>
                   )}
@@ -276,7 +276,7 @@ export const SimultaneousCrossSectionMatrix: React.FC<SimultaneousCrossSectionMa
                 {layoutRows.map(row => (
                   <th
                     key={row}
-                    className="bg-[#08121E] text-cyan-300 font-mono text-[10px] font-bold p-1 border border-slate-800 min-w-[56px]"
+                    className="bg-[#08121E] text-cyan-300 font-mono text-[10px] font-bold p-1 border border-slate-800 min-w-[64px] sm:min-w-[72px]"
                   >
                     R{row}
                   </th>

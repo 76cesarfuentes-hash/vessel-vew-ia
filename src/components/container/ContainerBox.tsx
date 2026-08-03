@@ -76,7 +76,7 @@ OOG: ${container.oogDim || (isOOG ? 'Sí' : 'No')}
       onClick={onClick}
       title={titleTooltip}
       className={`relative group cursor-pointer transition-all duration-150 select-none overflow-hidden rounded-xs
-        ${compact ? 'w-10 h-10' : 'w-12 h-12 md:w-14 md:h-14'}
+        ${compact ? 'w-10 h-10 md:w-11 md:h-11' : 'w-13 h-13 md:w-16 md:h-16'}
         border ${borderDashed} ${errorOutline} ${highlight ? 'ring-2 ring-cyan-400 scale-105 z-30' : ''}
         shadow-[inset_0_1px_0_rgba(255,255,255,0.25),inset_0_-6px_10px_rgba(0,0,0,0.4),0_2px_4px_rgba(0,0,0,0.5)]
         hover:scale-125 hover:z-40 hover:shadow-xl hover:ring-1 hover:ring-white`}

@@ -38,7 +38,7 @@ export const GlobalVoiceCopilot: React.FC = () => {
   }>>([
     {
       role: 'system',
-      text: '🎙 AGENTE DE VOZ TOS ESPECIALIZADO LISTO.\n• Hable o escriba para consultar el buque, ejecutar reportes o realizar ajustes de estiba.\n• Cumple strictly las reglas marítimas (No 20\' s/ 40\', Sustitución en Proa, Cama de 20\').',
+      text: '🎙 AGENTE DE VOZ ESPECIALIZADO Y EN ESPAÑOL LATINO\n• ¡Hola! Háblame o escríbeme para consultar el buque, generar reportes o hacer ajustes en el plano de estiba.\n• Aplicaré automáticamente las reglas marítimas (No 20\' s/ 40\', Sustitución en Proa y Cama de 20\').',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -60,7 +60,7 @@ export const GlobalVoiceCopilot: React.FC = () => {
         const recognition = new SpeechRecognition();
         recognition.continuous = false;
         recognition.interimResults = true;
-        recognition.lang = 'es-ES';
+        recognition.lang = 'es-MX'; // Latin American Spanish (México / LatAm)
 
         recognition.onstart = () => {
           setIsListening(true);
@@ -108,20 +108,50 @@ export const GlobalVoiceCopilot: React.FC = () => {
     }
   }, [chatMessages, isOpen]);
 
-  // Text-To-Speech function
+  // Text-To-Speech function with natural Latin American Spanish voice selection
   const speakText = (text: string) => {
     if (!speechEnabled || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
 
     try {
       window.speechSynthesis.cancel(); // Stop prior speech
+
+      // Clean speech text to sound natural without reading symbols or code blocks
       const cleanSpeech = text
         .replace(/```[\s\S]*?```/g, '')
-        .replace(/[*#_`]/g, '')
-        .substring(0, 300); // Limit speech length for clarity
+        .replace(/[*#_`~•]/g, ' ')
+        .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
+        .replace(/\n+/g, '. ')
+        .substring(0, 320); // Limit speech length for natural delivery
+
+      if (!cleanSpeech.trim()) return;
 
       const utterance = new SpeechSynthesisUtterance(cleanSpeech);
-      utterance.lang = 'es-ES';
-      utterance.rate = 1.05;
+      utterance.lang = 'es-MX'; // Priority to Latin American Spanish
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+
+      // Search for an authentic Latin American Spanish voice in the browser voices
+      const voices = window.speechSynthesis.getVoices();
+      if (voices && voices.length > 0) {
+        const latamVoice = voices.find(v =>
+          (v.lang.includes('es-MX') ||
+           v.lang.includes('es-419') ||
+           v.lang.includes('es-US') ||
+           v.lang.includes('es-CO') ||
+           v.lang.includes('es-AR') ||
+           v.lang.includes('es-CL') ||
+           v.name.toLowerCase().includes('mexico') ||
+           v.name.toLowerCase().includes('sabina') ||
+           v.name.toLowerCase().includes('mia') ||
+           v.name.toLowerCase().includes('paulina') ||
+           v.name.toLowerCase().includes('dalia') ||
+           v.name.toLowerCase().includes('jorge'))
+        ) || voices.find(v => v.lang.startsWith('es'));
+
+        if (latamVoice) {
+          utterance.voice = latamVoice;
+        }
+      }
 
       utterance.onstart = () => setIsSpeaking(true);
       utterance.onend = () => setIsSpeaking(false);
