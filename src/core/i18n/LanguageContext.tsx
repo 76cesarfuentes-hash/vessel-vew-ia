@@ -12,8 +12,8 @@ interface Translations {
 export const translations: Translations = {
   // Brand & Header
   appTitle: {
-    es: 'Mesa de Control y Operaciones TOS',
-    en: 'TOS Operations & Control Center'
+    es: 'POSEIDON IA - Operaciones & Estiba Portuaria',
+    en: 'POSEIDON AI - Port Operations & Stowage'
   },
   activeTerminal: {
     es: 'Terminal Activa',
@@ -140,12 +140,12 @@ export const translations: Translations = {
 
   // Auth & Login
   loginTitle: {
-    es: 'MESA DE PLANIFICACIÓN DE ESTIBA TOS',
-    en: 'TOS STOWAGE PLANNING DESK'
+    es: 'POSEIDON IA - SISTEMA PORTUARIO',
+    en: 'POSEIDON AI - PORT SYSTEM'
   },
   loginSubtitle: {
-    es: 'Plataforma de Control Terminal & Estiba Portuaria BAPLIE/MOVINS EDI',
-    en: 'Terminal Control & Port Stowage Platform BAPLIE/MOVINS EDI'
+    es: 'Plataforma Inteligente de Estiba, Simulación 2D & Control de Buques EDI',
+    en: 'Intelligent Stowage Platform, 2D Simulation & EDI Vessel Control'
   },
   usernameLabel: {
     es: 'Usuario',

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../core/security/AuthContext';
 import { useLanguage } from '../../core/i18n/LanguageContext';
 import { ContactModal } from '../common/ContactModal';
+import { LanguageSwitcher } from '../common/LanguageSwitcher';
 import { ForcePasswordChangeModal } from './ForcePasswordChangeModal';
 import { UserManagementModal } from './UserManagementModal';
 import { AuditLogsModal } from './AuditLogsModal';
@@ -62,15 +63,8 @@ export const UserSecurityBar: React.FC = () => {
             <span className="hidden md:inline text-[10px] font-bold">{t('contactUs', 'CONTACTO')}</span>
           </button>
 
-          {/* Language Switcher Button */}
-          <button
-            onClick={() => setLanguage(language === 'es' ? 'en' : 'es')}
-            className="p-1.5 sm:px-2 sm:py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 rounded-lg flex items-center gap-1 transition-all cursor-pointer"
-            title="Cambiar Idioma / Switch Language"
-          >
-            <Globe className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="text-[10px] font-bold">{language === 'es' ? '🇲🇽 ESP' : '🇺🇸 ENG'}</span>
-          </button>
+          {/* Language Switcher Component */}
+          <LanguageSwitcher />
 
           {/* User Management Button (RBAC: MANAGE_USERS) */}
           {hasPermission('MANAGE_USERS') && (

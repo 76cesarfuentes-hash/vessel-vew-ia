@@ -1,6 +1,6 @@
 {
-  "name": "Enterprise Terminal Planning Platform",
-  "description": "Operational maritime terminal planning platform for EDI, BAPLIE, MOVINS, stowage visualization, container reconciliation, auditing, and reports.",
+  "name": "POSEIDON IA",
+  "description": "Plataforma inteligente de gestión, simulación 2D y planificación de estiba portuaria y carga de buques POSEIDON IA.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

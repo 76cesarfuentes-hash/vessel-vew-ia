@@ -30,6 +30,7 @@ import appLogoPng from './assets/logo.png';
 import appLogoJpg from './assets/logo.jpg';
 
 import { ShareTransmitModal } from './components/common/ShareTransmitModal';
+import { PoseidonSimulationModal } from './components/common/PoseidonSimulationModal';
 
 import {
   Grid,
@@ -83,6 +84,7 @@ export default function App() {
 
   const [isManoMasLargaModalOpen, setIsManoMasLargaModalOpen] = useState<boolean>(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState<boolean>(false);
+  const [isSimModalOpen, setIsSimModalOpen] = useState<boolean>(true);
 
   const [sidebarLogoSrc, setSidebarLogoSrc] = useState<string>(appLogoGenerated || appLogoPng || appLogoJpg);
   const [sidebarLogoFailed, setSidebarLogoFailed] = useState<boolean>(false);
@@ -422,18 +424,27 @@ export default function App() {
             )}
             <div className="min-w-0">
               <h1 className="font-mono text-xs sm:text-sm md:text-base font-extrabold text-white tracking-wider sm:tracking-widest uppercase flex items-center gap-1.5 sm:gap-2 truncate">
-                <span className="truncate">TERMINAL PLANNING PLATFORM</span>
-                <span className="text-[9px] sm:text-[10px] bg-red-600 text-white font-mono px-1.5 sm:px-2 py-0.5 rounded font-bold flex-shrink-0">
-                  TOS V1.0
+                <span className="truncate">POSEIDON IA</span>
+                <span className="text-[9px] sm:text-[10px] bg-cyan-600 text-white font-mono px-1.5 sm:px-2 py-0.5 rounded font-bold flex-shrink-0">
+                  PORT AI V3.8
                 </span>
               </h1>
               <p className="text-[9px] sm:text-[10px] font-mono text-cyan-400 truncate">
-                EDI / BAPLIE / MOVINS · Reconciliación Inteligente
+                Plataforma Inteligente de Importación, Restibas & Agente IA
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-2.5 flex-wrap w-full sm:w-auto justify-start sm:justify-end overflow-x-auto pb-1 sm:pb-0">
+            {/* 2D Presentation & AI Inspection Button */}
+            <button
+              onClick={() => setIsSimModalOpen(true)}
+              className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-mono font-bold text-[10px] sm:text-xs py-1 sm:py-1.5 px-2.5 sm:px-3 rounded-lg border border-cyan-300 shadow-lg shadow-cyan-950 transition-all flex items-center gap-1.5 flex-shrink-0 cursor-pointer animate-pulse"
+              title="Ver análisis 2D de importación, restibas y reajustes del Agente IA"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-cyan-200" />
+              <span>Demostración IA 2D</span>
+            </button>
             {/* Operation View Selector (DESCARGA vs CARGA) */}
             <div className="bg-[#070D18] border border-slate-700 rounded-lg p-0.5 flex items-center font-mono flex-shrink-0">
               <button
@@ -557,6 +568,12 @@ export default function App() {
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
         vesselName="MAERSK HOUSTON"
+      />
+
+      {/* POSEIDON IA 2D Simulation & Simple Onboarding Modal */}
+      <PoseidonSimulationModal
+        isOpen={isSimModalOpen}
+        onClose={() => setIsSimModalOpen(false)}
       />
     </div>
   );

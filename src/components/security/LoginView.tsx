@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../core/security/AuthContext';
 import { useLanguage } from '../../core/i18n/LanguageContext';
 import { ContactModal } from '../common/ContactModal';
+import { LanguageSwitcher } from '../common/LanguageSwitcher';
 import appLogoGenerated from '../../assets/images/stowage_app_logo_1785618008257.jpg';
 import appLogoPng from '../../assets/logo.png';
 import appLogoJpg from '../../assets/logo.jpg';
@@ -63,15 +64,8 @@ export const LoginView: React.FC = () => {
           <span>{t('contactUs', 'Contacto')}</span>
         </button>
 
-        {/* Language Switcher Button */}
-        <button
-          onClick={() => setLanguage(language === 'es' ? 'en' : 'es')}
-          className="py-1.5 px-3 bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700 text-slate-200 hover:text-white rounded-xl text-xs font-mono flex items-center gap-1.5 transition-colors shadow-lg cursor-pointer"
-          title="Cambiar Idioma / Change Language"
-        >
-          <Globe className="w-3.5 h-3.5 text-emerald-400" />
-          <span className="font-bold">{language === 'es' ? '🇲🇽 ESP' : '🇺🇸 ENG'}</span>
-        </button>
+        {/* Language Switcher */}
+        <LanguageSwitcher />
       </div>
 
       {/* Main Login Card Container */}
