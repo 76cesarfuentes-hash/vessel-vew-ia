@@ -23,7 +23,7 @@ import { MovimientosModuleView } from './modules/MovimientosModuleView';
 import { ManualAdjustmentEngineView } from './modules/ManualAdjustmentEngineView';
 import { AutoStowagePlannerView } from './modules/AutoStowagePlannerView';
 import { TongaPatioChessSimView } from './modules/TongaPatioChessSimView';
-import { GlobalTradeMapView } from './modules/GlobalTradeMapView';
+import { ImportExportTradeView } from './modules/ImportExportTradeView';
 
 import { generateSampleBaplieContainers } from './core/parser/demoData';
 
@@ -87,7 +87,7 @@ export default function App() {
     setContainers
   } = useStowageStore();
 
-  const [activeTab, setActiveTab] = useState<'estiba' | 'planos' | 'cuadre' | 'movins' | 'agents' | 'comparador' | 'miniplanpro' | 'movimientos' | 'manual-engine' | 'auto-excel' | 'tonga-patio' | 'mapa-mundial'>('estiba');
+  const [activeTab, setActiveTab] = useState<'estiba' | 'planos' | 'cuadre' | 'movins' | 'agents' | 'comparador' | 'miniplanpro' | 'movimientos' | 'manual-engine' | 'auto-excel' | 'tonga-patio' | 'import-export'>('estiba');
 
   const [isManoMasLargaModalOpen, setIsManoMasLargaModalOpen] = useState<boolean>(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState<boolean>(false);
@@ -350,13 +350,13 @@ export default function App() {
         </button>
 
         <button
-          onClick={() => handleTabChange('mapa-mundial', 'Mapa Mundial de Comercio Marítimo')}
+          onClick={() => handleTabChange('import-export', 'Radar Importación y Exportación EDI')}
           className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer relative ${
-            activeTab === 'mapa-mundial'
+            activeTab === 'import-export'
               ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50 shadow-[0_0_12px_rgba(0,229,255,0.4)]'
               : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
           }`}
-          title={isPaidUser ? "Mapa Mundial de Comercio Marítimo (Importación/Exportación)" : "🔒 Función del Modo de Paga (Planner)"}
+          title={isPaidUser ? "Radar de Tráfico Marítimo (Importación / Exportación BAPLIE-MOVINS)" : "🔒 Función del Modo de Paga (Planner)"}
         >
           <Globe className="w-5 h-5 text-cyan-400 animate-spin-slow" />
           {!isPaidUser && <Lock className="w-3 h-3 text-amber-400 absolute top-1 right-1" />}
@@ -463,13 +463,13 @@ export default function App() {
         </button>
 
         <button
-          onClick={() => handleTabChange('mapa-mundial', 'Mapa Mundial')}
+          onClick={() => handleTabChange('import-export', 'Radar Import/Export')}
           className={`flex flex-col items-center justify-center flex-1 py-1 px-0.5 rounded text-[10px] font-mono transition-all relative ${
-            activeTab === 'mapa-mundial' ? 'text-cyan-400 font-bold bg-cyan-950/60' : 'text-slate-400'
+            activeTab === 'import-export' ? 'text-cyan-400 font-bold bg-cyan-950/60' : 'text-slate-400'
           }`}
         >
           <Globe className="w-4 h-4 mb-0.5 text-cyan-400" />
-          <span>Mapa</span>
+          <span>Radar</span>
           {!isPaidUser && <Lock className="w-2.5 h-2.5 text-amber-400 absolute top-0.5 right-1" />}
         </button>
       </nav>
@@ -640,7 +640,7 @@ export default function App() {
           {activeTab === 'manual-engine' && <ManualAdjustmentEngineView />}
           {activeTab === 'auto-excel' && <AutoStowagePlannerView />}
           {activeTab === 'tonga-patio' && <TongaPatioChessSimView />}
-          {activeTab === 'mapa-mundial' && <GlobalTradeMapView />}
+          {activeTab === 'import-export' && <ImportExportTradeView />}
         </main>
       </div>
 
