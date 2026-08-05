@@ -62,7 +62,7 @@ export const AgentsCopilotView: React.FC = () => {
       id: 'sys-0',
       role: 'system',
       timestamp: new Date().toLocaleTimeString(),
-      text: '🤖 AGENTE BAPLIE / MOVINS OPERATIVO INICIADO\n• Acceso directo a masterContainers[] e índices del sistema.\n• Genera reportes interactivos (DG, Reefer, OOG, Vacíos, Tanques, Puertos) descargables en Excel y PDF.\n• Si un contenedor o puerto no existe en el manifiesto, indicará explícitamente "No hay registro".'
+      text: '⚓ NEXT PORT IA — MOTOR DE INTELIGENCIA Y PLANIFICACIÓN DE TERMINAL (TOS Specialist)\n• Rol: Planner de Terminal Senior de nivel experto.\n• Reglas activas: No 20\' s/ 40\', Cama 20\', Puntos eléctricos Reefer, Segregación IMDG/IMO, Secuenciación por POD.\n• Acceso directo a masterContainers[] e índices sincrónicos.\n• Function calling habilitado: generarMiniPlano(bahiaId), filtrarContenedores(tipo), ejecutarAuditoriaEstiba().\n• Verificación estricta "No hay registro" ante contenedores o datos no existentes.'
     }
   ]);
 
@@ -120,6 +120,51 @@ export const AgentsCopilotView: React.FC = () => {
     ]);
   };
 
+  // Function call executor for Next Port IA
+  const executeFunctionCall = (fnName: string, args: any) => {
+    if (fnName === 'generarMiniPlano' || fnName === 'generarMiniPlano') {
+      const bay = String(args?.bahiaId || args?.bay || '02').padStart(2, '0');
+      setSelectedBay(bay);
+      setFilters({ search: '' });
+      setChatMessages(prev => [
+        ...prev,
+        {
+          id: `fn-${Date.now()}`,
+          role: 'assistant',
+          timestamp: new Date().toLocaleTimeString(),
+          text: `⚙️ [NEXT PORT IA CALL]: \`generarMiniPlano("${bay}")\` ejecutada con éxito. Renderizando vista transversal de Bahía ${bay}.`
+        }
+      ]);
+    } else if (fnName === 'filtrarContenedores') {
+      const tipo = String(args?.tipo || 'ALL').toUpperCase();
+      if (['DG', 'RF', 'MT', 'OOG', 'ALL'].includes(tipo)) {
+        setFilters({ cargoType: tipo as any });
+      } else {
+        setFilters({ search: tipo });
+      }
+      setChatMessages(prev => [
+        ...prev,
+        {
+          id: `fn-${Date.now()}`,
+          role: 'assistant',
+          timestamp: new Date().toLocaleTimeString(),
+          text: `⚙️ [NEXT PORT IA CALL]: \`filtrarContenedores("${tipo}")\` ejecutada. Filtro activo en el plano de estiba.`
+        }
+      ]);
+    } else if (fnName === 'ejecutarAuditoriaEstiba') {
+      handleRunAudit();
+      setChatMessages(prev => [
+        ...prev,
+        {
+          id: `fn-${Date.now()}`,
+          role: 'assistant',
+          timestamp: new Date().toLocaleTimeString(),
+          text: `⚙️ [NEXT PORT IA CALL]: \`ejecutarAuditoriaEstiba()\` ejecutada. Auditoría marítima completada.`
+        }
+      ]);
+    }
+  };
+
   // Agent Smart Command Dispatcher
   const handleSendPrompt = async (textToSend?: string) => {
     const q = (textToSend || promptInput).trim();
@@ -133,6 +178,27 @@ export const AgentsCopilotView: React.FC = () => {
     setIsAsking(true);
 
     const lower = q.toLowerCase();
+
+    // Direct Function Call trigger parsing (e.g., generarMiniPlano(22), filtrarContenedores("RF"), ejecutarAuditoriaEstiba())
+    const miniPlanMatch = q.match(/generarMiniPlano\s*\(\s*['"]?([0-9A-Z]+)['"]?\s*\)/i) || q.match(/(?:mini\s*plano|vista\s*bahia|bahia)\s*([0-9]{1,2})/i);
+    if (miniPlanMatch && miniPlanMatch[1]) {
+      executeFunctionCall('generarMiniPlano', { bahiaId: miniPlanMatch[1] });
+      setIsAsking(false);
+      return;
+    }
+
+    const filterMatch = q.match(/filtrarContenedores\s*\(\s*['"]?([A-Z0-9_]+)['"]?\s*\)/i);
+    if (filterMatch && filterMatch[1]) {
+      executeFunctionCall('filtrarContenedores', { tipo: filterMatch[1] });
+      setIsAsking(false);
+      return;
+    }
+
+    if (q.includes('ejecutarAuditoriaEstiba()') || lower.includes('auditar estiba')) {
+      executeFunctionCall('ejecutarAuditoriaEstiba', {});
+      setIsAsking(false);
+      return;
+    }
 
     // 1. CHECK FOR CANCEL COMMAND
     const cancelMatch = q.match(/cancela(?:r)?\s+(?:el\s+contenedor\s+)?([A-Z0-9]{4,11})/i);
@@ -497,6 +563,9 @@ export const AgentsCopilotView: React.FC = () => {
     if (jsonMatch && jsonMatch[1]) {
       try {
         parsedActionBlock = JSON.parse(jsonMatch[1]);
+        if (parsedActionBlock.functionCall) {
+          executeFunctionCall(parsedActionBlock.functionCall, parsedActionBlock.arguments || {});
+        }
       } catch (e) {
         // ignore
       }
@@ -535,7 +604,7 @@ export const AgentsCopilotView: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-                AGENTE OPERATIVO ENTERPRISE DE ESTIBA & REPORTES
+                NEXT PORT IA — SENIOR TERMINAL PLANNER (TOS)
               </h2>
               <span className="bg-purple-950 text-purple-300 border border-purple-800 text-[9px] font-bold px-2 py-0.5 rounded">
                 MASTER INDEXING ACTIVE
