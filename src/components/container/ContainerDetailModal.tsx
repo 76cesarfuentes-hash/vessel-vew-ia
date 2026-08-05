@@ -52,8 +52,13 @@ export const ContainerDetailModal: React.FC<ContainerDetailModalProps> = ({
   const tierStr = (container.tier || '').padStart(2, '0');
   const fullPositionStr = container.position || `${bayStr}${rowStr}${tierStr}`;
 
-  const { parsedContainers, validateStackingRules, podSequence, executeAdjustment } = useStowageStore();
-  const stackingViolations = validateStackingRules ? validateStackingRules(parsedContainers) : [];
+  const { parsedContainers, parsedDischargeContainers, fileName, validateStackingRules, podSequence, executeAdjustment } = useStowageStore();
+  const isBaplieLoaded = Boolean(
+    fileName &&
+    fileName !== 'Sin archivo EDI' &&
+    parsedDischargeContainers.length > 0
+  );
+  const stackingViolations = isBaplieLoaded && validateStackingRules ? validateStackingRules(parsedContainers) : [];
   const containerViolation = stackingViolations.find(
     v => v.container40?.id === container.id || v.container20?.id === container.id
   );

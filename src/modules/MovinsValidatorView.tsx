@@ -12,7 +12,8 @@ import {
   Ship,
   Sparkles,
   Layers,
-  Upload
+  Upload,
+  Zap
 } from 'lucide-react';
 
 export const MovinsValidatorView: React.FC = () => {
@@ -136,6 +137,35 @@ export const MovinsValidatorView: React.FC = () => {
               <FileSpreadsheet className="w-3.5 h-3.5" /> EXPORTAR EXCEL RESTIBAS
             </button>
           )}
+        </div>
+      </div>
+
+      {/* REGLAS DE CLASIFICACIÓN Y ANÁLISIS EDI (LOC+11+, LOC+9+, HAN+RES) */}
+      <div className="bg-[#050C17] border border-cyan-500/30 rounded-lg p-3 mb-4 font-mono text-xs shadow-md">
+        <div className="flex items-center gap-2 text-cyan-300 font-bold text-[11px] uppercase border-b border-slate-800 pb-1.5 mb-2">
+          <Zap className="w-4 h-4 text-cyan-400" /> REGLAS DE ANÁLISIS SEGMENTOS EDIFACT (BAPLIE & MOVINS):
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-[11px]">
+          <div className="bg-[#081322] p-2.5 rounded border border-orange-500/30">
+            <span className="text-orange-400 font-bold block mb-1">📥 BAPLIE (DESCARGA) — LOC+11+</span>
+            <p className="text-slate-300 text-[10px] leading-relaxed">
+              El sistema evalúa el segmento <strong className="text-orange-300">LOC+11+&lt;PUERTO&gt;</strong> (POD). Si coincide con el puerto de la terminal (ej: <code className="bg-slate-800 px-1 py-0.5 rounded text-orange-200">LOC+11+MXZLO</code> para Manzanillo), la unidad se clasifica como <strong>DESCARGA / IMPORTACIÓN</strong>. Si indica otro puerto, es <strong>TRÁNSITO</strong>.
+            </p>
+          </div>
+
+          <div className="bg-[#081322] p-2.5 rounded border border-emerald-500/30">
+            <span className="text-emerald-400 font-bold block mb-1">📤 MOVINS (CARGA) — LOC+9+</span>
+            <p className="text-slate-300 text-[10px] leading-relaxed">
+              El sistema evalúa el segmento <strong className="text-emerald-300">LOC+9+&lt;PUERTO&gt;</strong> (POL/Exportación). Indica las instrucciones de embarque y puerto de origen/carga para las unidades a exportar en el buque.
+            </p>
+          </div>
+
+          <div className="bg-[#081322] p-2.5 rounded border border-amber-500/30">
+            <span className="text-amber-400 font-bold block mb-1">🔄 RESTIBAS EN MOVINS — HAN+RES</span>
+            <p className="text-slate-300 text-[10px] leading-relaxed">
+              El segmento <strong className="text-amber-300">HAN+RES</strong> en el archivo MOVINS identifica explícitamente las unidades en <strong>RESTIBA / REUBICACIÓN DENTRO DEL BUQUE</strong> (re-stows/shiftings), procesando su reordenamiento o remoción de forma automática.
+            </p>
+          </div>
         </div>
       </div>
 

@@ -82,7 +82,7 @@ export const getBaySectionKey = (bayStr: string): string => {
 };
 
 export function ManualAdjustmentEngineView() {
-  const { parsedContainers, activeTerminalKey, activeOperationView, baplieHeader, selectedContainer, setSelectedContainer } = useStowageStore();
+  const { parsedContainers, parsedDischargeContainers, fileName, activeTerminalKey, activeOperationView, baplieHeader, selectedContainer, setSelectedContainer } = useStowageStore();
 
   // ── CERTIFICATION MODAL STATE ──
   const [showCertifyModal, setShowCertifyModal] = useState<boolean>(false);
@@ -103,8 +103,14 @@ export function ManualAdjustmentEngineView() {
 
   // Compute container stacking rule violations (e.g. 40ft over single 20ft)
   const stackingViolations = useMemo(() => {
+    const isBaplieLoaded = Boolean(
+      fileName &&
+      fileName !== 'Sin archivo EDI' &&
+      parsedDischargeContainers.length > 0
+    );
+    if (!isBaplieLoaded) return [];
     return validateContainerStackingRules(localContainers);
-  }, [localContainers]);
+  }, [localContainers, fileName, parsedDischargeContainers.length]);
 
   // Active Bay Section tab (20ft Fore, 40ft Center & 20ft Aft combined)
   const [activeBay, setActiveBay] = useState<string>('02');
@@ -1109,22 +1115,6 @@ export function ManualAdjustmentEngineView() {
         </div>
       </div>
 
-      {/* ── STACKING RULE VIOLATION BANNER ── */}
-      {stackingViolations.length > 0 && (
-        <div className="bg-red-950/90 border-2 border-red-500 rounded-xl p-3.5 text-red-200 font-mono text-xs flex flex-col gap-2 shadow-[0_0_20px_rgba(239,68,68,0.3)] animate-fadeIn">
-          <div className="flex items-center gap-2 font-bold text-red-300 text-sm">
-            <AlertTriangle className="w-5 h-5 text-red-400 animate-pulse flex-shrink-0" />
-            <span>ALERTA DE REGLAS DE ESTIBA: {stackingViolations.length} {stackingViolations.length === 1 ? 'VIOLACIÓN DETECTADA' : 'VIOLACIONES DETECTADAS'}</span>
-          </div>
-          <div className="space-y-1 pl-7">
-            {stackingViolations.map((v, i) => (
-              <p key={i} className="text-red-200/90 text-xs">
-                • <strong className="text-red-300">{v.type === '40_OVER_SINGLE_20' ? 'CAMA INCOMPLETA (40\' s/ 1x 20\')' : '20\' SOBRE 40\''}</strong>: {v.message}
-              </p>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* ── VALIDATION BANNER ── */}
       {validationMsg && (

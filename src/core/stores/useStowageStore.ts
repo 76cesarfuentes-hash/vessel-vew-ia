@@ -6,6 +6,7 @@ import { parseMovinsText, MovinsMovement } from '../parser/movinsParser';
 import { generateSampleBaplieContainers, generateSampleMovinsEDIString } from '../parser/demoData';
 import { processMovinsPlanning, MovinsProcessingResult } from '../business/movinsEngine';
 import { checkIsDischargeContainer } from '../business/restowEngine';
+import { normalizePortCode } from '../parser/portNormalizer';
 import { resetPodColors } from '../business/colorEngine';
 import { FilterState, DEFAULT_FILTER_STATE } from '../models/filter';
 import { applyFilters } from '../business/filterEngine';
@@ -201,18 +202,36 @@ export const stowageStore = {
     const result = parseBaplieText(text);
     resetPodColors();
 
+    // Auto-detect terminal key matching LOC+11+<PUERTO> (POD)
+    let targetTerminalKey = globalState.activeTerminalKey;
+    const rawPod = result.headerInfo.pod || (result.containers.find(c => c.pod && c.pod !== 'Dato no disponible')?.pod);
+
+    if (rawPod) {
+      const norm = normalizePortCode(rawPod);
+      const foundKey = Object.keys(TERMINAL_PROFILES).find(k => {
+        const prof = TERMINAL_PROFILES[k];
+        return k === norm || prof.homePorts.some(hp => normalizePortCode(hp) === norm || hp.toUpperCase() === rawPod.toUpperCase());
+      });
+      if (foundKey) {
+        targetTerminalKey = foundKey;
+        saveTerminalSetting(foundKey);
+      }
+    }
+
     const dischargeContainers = result.containers.map(c => ({
       ...c,
-      operation: checkIsDischargeContainer(c, globalState.activeTerminalKey) ? 'DISCHARGE' as const : 'NO MOVE' as const
+      operation: checkIsDischargeContainer(c, targetTerminalKey) ? 'DISCHARGE' as const : 'NO MOVE' as const
     }));
 
     // Initial load containers = Transit containers from BAPLIE
     const initialLoadContainers = dischargeContainers.filter(
-      c => !checkIsDischargeContainer(c, globalState.activeTerminalKey)
+      c => !checkIsDischargeContainer(c, targetTerminalKey)
     );
 
     globalState = updateFilteredState({
       ...globalState,
+      activeTerminalKey: targetTerminalKey,
+      activeTerminal: TERMINAL_PROFILES[targetTerminalKey] || TERMINAL_PROFILES.CLSAI || TERMINAL_PROFILES.VER,
       parsedDischargeContainers: dischargeContainers,
       parsedLoadContainers: initialLoadContainers,
       activeOperationView: 'DESCARGA',
@@ -373,6 +392,16 @@ export const stowageStore = {
   },
 
   validateStackingRules: (customContainers?: Container[]): StackingRuleViolation[] => {
+    const isBaplieLoaded = Boolean(
+      globalState.fileName &&
+      globalState.fileName !== 'Sin archivo EDI' &&
+      globalState.parsedDischargeContainers.length > 0
+    );
+
+    if (!isBaplieLoaded) {
+      return [];
+    }
+
     const dataset = customContainers || globalState.parsedContainers;
     return validateContainerStackingRules(dataset);
   }

@@ -2,6 +2,7 @@ import { Container, CargoType } from '../models/container';
 import { MovinsMovement } from '../parser/movinsParser';
 import { checkIsDischargeContainer, parsePosition, ParsedPos } from './restowEngine';
 import { normalizePortCode, NO_DATA } from '../parser/portNormalizer';
+import { validateContainerStackingRules } from './adjustmentEngine';
 
 export interface RestowDetail {
   id: string;
@@ -314,6 +315,16 @@ export function processMovinsPlanning(
       };
       loadList.push(fallbackRestow);
     }
+  });
+
+  // Validate stacking / bed rules on the resulting load plan (BAPLIE + MOVINS)
+  const stackingViolations = validateContainerStackingRules(loadList);
+  stackingViolations.forEach(v => {
+    alerts.push({
+      severity: 'CRÍTICA',
+      title: 'ALERTA DE ESTIBA EN MOVINS (REGLA DE CAMA)',
+      message: v.message
+    });
   });
 
   return {

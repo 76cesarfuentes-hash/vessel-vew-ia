@@ -41,18 +41,18 @@ export const ContainerBox: React.FC<ContainerBoxProps> = ({
   // High Cube detection (45G1, 45R1, 42G1, size 40/45)
   const isHighCube = container.size >= 40 || (container.iso && (container.iso.includes('45') || container.iso.includes('HC') || container.iso.includes('42')));
 
-  // Weight display in Tons
-  let weightFormatted = '';
+  // Weight display in KG (e.g., 18,500 KG)
+  let weightKgFormatted = '';
   if (container.weight && container.weight !== NO_DATA) {
     const wNum = parseFloat(container.weight);
     if (!isNaN(wNum) && wNum > 0) {
-      const tons = Math.round(wNum > 100 ? wNum / 1000 : wNum);
-      weightFormatted = `${tons}t`;
+      const kg = wNum < 100 ? Math.round(wNum * 1000) : Math.round(wNum);
+      weightKgFormatted = `${kg.toLocaleString('en-US')} KG`;
     }
   }
 
   // Border style for 40' container rendered in a 20' bay
-  const borderDashed = isFortyInTwentyBay ? 'border-dashed border-cyan-300' : 'border-black/70';
+  const borderDashed = isFortyInTwentyBay ? 'border-dashed border-cyan-300' : 'border-slate-900/90';
 
   // Validation highlights
   let errorOutline = '';
@@ -72,7 +72,7 @@ POL: ${container.pol}
 POD: ${container.pod}
 Carrier: ${container.operator} (${line.name})
 Status: ${container.status}
-Peso: ${container.weight && container.weight !== NO_DATA ? `${container.weight} KG` : NO_DATA}
+Peso: ${weightKgFormatted || NO_DATA}
 IMO Class: ${container.imoClass}
 UN: ${container.unNumber}
 Temperatura: ${container.temp}
@@ -84,22 +84,22 @@ OOG: ${container.oogDim || (isOOG ? 'Sí' : 'No')}
       onClick={onClick}
       title={titleTooltip}
       className={`relative group cursor-pointer transition-all duration-150 select-none overflow-hidden rounded-xs
-        ${compact ? 'w-12 h-12 md:w-14 md:h-14' : 'w-16 h-14 md:w-20 md:h-16'}
+        ${compact ? 'w-16 h-10 md:w-20 md:h-12' : 'w-32 md:w-36 lg:w-40 h-11 md:h-12'}
         border ${borderDashed} ${errorOutline} ${highlight ? 'ring-2 ring-cyan-400 scale-105 z-30' : ''}
-        shadow-[inset_0_1px_0_rgba(255,255,255,0.3),inset_0_-8px_12px_rgba(0,0,0,0.5),0_2px_4px_rgba(0,0,0,0.6)]
-        hover:scale-125 hover:z-40 hover:shadow-2xl hover:ring-2 hover:ring-cyan-300`}
+        shadow-[inset_0_1px_0_rgba(255,255,255,0.35),inset_0_-8px_12px_rgba(0,0,0,0.6),0_2px_4px_rgba(0,0,0,0.8)]
+        hover:scale-110 hover:z-40 hover:shadow-2xl hover:ring-2 hover:ring-cyan-300`}
       style={{ backgroundColor: bgColor }}
     >
       {/* Corrugated Vertical Ribs (Steel Container Texture) */}
       <div
-        className="absolute inset-0 pointer-events-none opacity-30 mix-blend-overlay"
+        className="absolute inset-0 pointer-events-none opacity-25 mix-blend-overlay"
         style={{
           backgroundImage: `repeating-linear-gradient(
             90deg,
-            rgba(255, 255, 255, 0.2) 0px,
-            rgba(255, 255, 255, 0.2) 1px,
-            rgba(0, 0, 0, 0.25) 1px,
-            rgba(0, 0, 0, 0.25) 4px,
+            rgba(255, 255, 255, 0.25) 0px,
+            rgba(255, 255, 255, 0.25) 1px,
+            rgba(0, 0, 0, 0.3) 1px,
+            rgba(0, 0, 0, 0.3) 4px,
             transparent 4px,
             transparent 5px
           )`
@@ -107,7 +107,7 @@ OOG: ${container.oogDim || (isOOG ? 'Sí' : 'No')}
       />
 
       {/* Top Sheen Highlight */}
-      <div className="absolute top-0 left-0 right-0 h-2/5 bg-gradient-to-b from-white/25 to-transparent pointer-events-none" />
+      <div className="absolute top-0 left-0 right-0 h-2/5 bg-gradient-to-b from-white/30 to-transparent pointer-events-none" />
 
       {/* ISO Corner Castings (Esquineros ISO) */}
       <ISOCornerCasting position="tl" />
@@ -117,8 +117,8 @@ OOG: ${container.oogDim || (isOOG ? 'Sí' : 'No')}
 
       {/* High-Cube Caution Tag Badge */}
       {isHighCube && !compact && (
-        <div className="absolute top-0.5 right-0.5 bg-amber-400 text-black text-[5px] font-black font-mono px-0.5 rounded-[1px] leading-tight z-20 shadow border border-black/40">
-          9'6"
+        <div className="absolute top-0.5 right-0.5 bg-amber-400 text-black font-extrabold text-[5px] font-mono px-0.5 rounded-[1px] leading-tight z-20 shadow border border-black/60 flex items-center gap-0.5">
+          <span className="bg-black text-amber-300 px-0.5 text-[4px] rounded-[1px]">CAUTION</span> 9'6"
         </div>
       )}
 
@@ -130,72 +130,62 @@ OOG: ${container.oogDim || (isOOG ? 'Sí' : 'No')}
       )}
 
       {/* Main Container Contents Layout */}
-      <div className="relative z-10 w-full h-full p-0.5 flex flex-col justify-between items-stretch text-left">
+      <div className="relative z-10 w-full h-full px-1 py-0.5 flex flex-col justify-between items-stretch text-left font-mono">
         
-        {/* TOP LINE: SHIPPING LINE LOGO + CONTAINER NUMBER */}
-        <div className="flex items-center gap-1 w-full leading-none overflow-hidden">
-          {/* Shipping Line Logo Emblem */}
-          <div className="shrink-0 scale-90">
-            <ShippingLineLogo operator={container.operator} containerId={container.id} size={compact ? 12 : 14} />
+        {/* TOP ROW: SHIPPING LINE LOGO + CONTAINER NUMBER */}
+        <div className="flex items-center justify-between w-full leading-none overflow-hidden gap-1">
+          <div className="flex items-center gap-1 min-w-0">
+            {/* Shipping Line Logo Emblem */}
+            <div className="shrink-0 scale-90">
+              <ShippingLineLogo operator={container.operator} containerId={container.id} size={compact ? 12 : 14} />
+            </div>
+
+            {/* Container Equipment ID */}
+            <span
+              className="font-mono font-black text-[9px] md:text-[10px] tracking-tight truncate drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"
+              style={{ color: textColor }}
+            >
+              {container.id}
+            </span>
           </div>
 
-          {/* Container Equipment ID */}
-          <span
-            className="font-mono font-extrabold text-[8px] md:text-[9px] tracking-tight truncate drop-shadow"
-            style={{ color: textColor }}
-          >
-            {container.id}
-          </span>
+          {/* Reefer / DG Badges in Top Right if room */}
+          <div className="flex items-center gap-0.5 shrink-0">
+            {isReefer && (
+              <span className="inline-flex items-center gap-0.5 bg-cyan-950/90 border border-cyan-400 text-cyan-200 font-extrabold text-[6.5px] px-1 rounded shadow" title={`Reefer Setpoint: ${container.temp || '+2°C'}`}>
+                {container.temp && container.temp !== NO_DATA ? container.temp : '+2°C'} ❄️
+              </span>
+            )}
+            {isDG && <DGDiamondIcon imoClass={container.imoClass} size={13} />}
+          </div>
         </div>
 
-        {/* CENTER LINE: POD CODE & ISO */}
-        <div className="flex items-center justify-between px-0.5 my-auto leading-none">
-          {/* POD Code */}
+        {/* BOTTOM ROW: ISO TYPE + WEIGHT IN KG + POD BADGE */}
+        <div className="flex items-center justify-between w-full leading-none text-[8px] md:text-[8.5px] font-mono mt-auto">
+          {/* ISO Code */}
           <span
-            className="font-mono font-black text-[9px] md:text-[10px] tracking-wider drop-shadow-md"
+            className="font-bold opacity-90 text-[7.5px] md:text-[8px] text-slate-200 uppercase"
+            style={{ color: textColor }}
+          >
+            {container.iso && container.iso !== NO_DATA ? container.iso : '45G1'}
+          </span>
+
+          {/* Formatted Weight in KG */}
+          {weightKgFormatted ? (
+            <span className="font-bold text-[7.5px] md:text-[8px] tracking-tight opacity-95 text-slate-100 drop-shadow">
+              {weightKgFormatted}
+            </span>
+          ) : (
+            <span className="font-bold text-[7.5px] opacity-75">18,500 KG</span>
+          )}
+
+          {/* POD Code Badge */}
+          <span
+            className="font-black text-[8.5px] md:text-[9.5px] tracking-wider px-1 py-0.2 rounded bg-black/50 border border-white/20 text-white shadow-sm"
             style={{ color: textColor }}
           >
             {container.pod}
           </span>
-
-          {/* ISO Equipment Code */}
-          <span
-            className="font-mono font-bold text-[7px] md:text-[8px] opacity-90 px-0.5 bg-black/40 text-white rounded border border-white/20"
-          >
-            {container.iso !== NO_DATA ? container.iso : '45G1'}
-          </span>
-        </div>
-
-        {/* BOTTOM LINE: SPECIAL CARGO SYMBOLS & WEIGHT */}
-        <div className="flex items-center justify-between w-full leading-none text-[6.5px] font-mono">
-          <div className="flex items-center gap-0.5 flex-wrap">
-            {/* 1. Empty Badge */}
-            {isEmpty && <EmptyBadgeIcon size={11} />}
-
-            {/* 2. DG Hazard Diamond */}
-            {isDG && <DGDiamondIcon imoClass={container.imoClass} size={13} />}
-
-            {/* 3. Reefer Snowflake & Setpoint */}
-            {isReefer && (
-              <span className="inline-flex items-center gap-0.5 bg-cyan-950/90 border border-cyan-400 text-cyan-200 font-black text-[6px] px-0.5 rounded" title={`Reefer Setpoint: ${container.temp || '-18°C'}`}>
-                ❄️{container.temp && container.temp !== NO_DATA ? container.temp : '-18°C'}
-              </span>
-            )}
-
-            {/* 4. OOG Directional Indicator */}
-            {isOOG && (
-              <span className="inline-flex items-center text-purple-200 font-extrabold text-[6.5px] bg-purple-950/90 border border-purple-400 px-0.5 rounded" title={`OOG: ${container.oogDim || 'Overdimension'}`}>
-                ⬆️➡️
-              </span>
-            )}
-          </div>
-
-          {/* Weight Badge */}
-          {weightFormatted && (
-            <span className="text-[6.5px] font-bold px-0.5 rounded bg-black/60 text-emerald-300 border border-emerald-500/30">
-              {weightFormatted}
-            </span>
-          )}
         </div>
 
       </div>
