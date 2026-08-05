@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../core/security/AuthContext';
 import { useLanguage } from '../../core/i18n/LanguageContext';
 import { ContactModal } from '../common/ContactModal';
-import bgImage from '../../assets/images/poseidon_port_bg_1785922847366.jpg';
+import bgImage from '../../assets/images/port_gantry_night_1785923422918.jpg';
 import {
   Anchor,
   ShieldCheck,
@@ -48,6 +48,20 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
   // Mode: 'login' | 'demo'
   const [activeTab, setActiveTab] = useState<'login' | 'demo'>('login');
+
+  // Terminal Selector state (Not defaulted to Veracruz)
+  const [selectedTerminal, setSelectedTerminal] = useState<string>('SELECCIONAR TERMINAL');
+  const [isTerminalDropdownOpen, setIsTerminalDropdownOpen] = useState<boolean>(false);
+
+  const terminalList = [
+    'SELECCIONAR TERMINAL',
+    'MANZANILLO (ZLO)',
+    'LÁZARO CÁRDENAS (LZC)',
+    'VERACRUZ (VER)',
+    'ALTAMIRA (ATM)',
+    'BALBOA (BLB)',
+    'HOUSTON (HOU)'
+  ];
 
   // Form State
   const [username, setUsername] = useState<string>('admin');
@@ -218,15 +232,45 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         </div>
 
         {/* Right: Active Terminal & Status */}
-        <div className="flex items-center gap-3 font-mono">
-          <div className="bg-[#061322] border border-slate-700 px-2.5 py-1 rounded-lg flex items-center gap-2">
-            <div>
-              <div className="text-[8px] text-slate-400 font-bold uppercase">TERMINAL ACTIVO</div>
-              <div className="text-xs font-black text-cyan-300 flex items-center gap-1">
-                VERACRUZ (VER)
-                <ChevronDown className="w-3 h-3 text-cyan-400" />
+        <div className="flex items-center gap-3 font-mono relative">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsTerminalDropdownOpen(!isTerminalDropdownOpen)}
+              className="bg-[#061322] hover:bg-[#0A1B2E] border border-cyan-500/40 px-3 py-1 rounded-lg flex items-center gap-2 cursor-pointer transition-all text-left"
+            >
+              <div>
+                <div className="text-[8px] text-slate-400 font-bold uppercase tracking-wider">TERMINAL ACTIVO</div>
+                <div className="text-xs font-black text-cyan-300 flex items-center gap-1.5">
+                  <span>{selectedTerminal}</span>
+                  <ChevronDown className={`w-3.5 h-3.5 text-cyan-400 transition-transform ${isTerminalDropdownOpen ? 'rotate-180' : ''}`} />
+                </div>
               </div>
-            </div>
+            </button>
+
+            {/* Dropdown Menu */}
+            {isTerminalDropdownOpen && (
+              <div className="absolute right-0 mt-1 w-52 bg-[#050E1A] border border-cyan-500/40 rounded-xl shadow-2xl z-50 overflow-hidden py-1 backdrop-blur-xl">
+                {terminalList.map((term) => (
+                  <button
+                    key={term}
+                    type="button"
+                    onClick={() => {
+                      setSelectedTerminal(term);
+                      setIsTerminalDropdownOpen(false);
+                    }}
+                    className={`w-full px-3 py-2 text-left text-xs font-mono font-bold flex items-center justify-between transition-colors ${
+                      selectedTerminal === term
+                        ? 'bg-cyan-950 text-cyan-300 border-l-2 border-cyan-400'
+                        : 'text-slate-300 hover:bg-[#091B30] hover:text-white'
+                    }`}
+                  >
+                    <span>{term}</span>
+                    {selectedTerminal === term && <Check className="w-3.5 h-3.5 text-cyan-400" />}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="hidden sm:flex flex-col items-end text-[10px]">
