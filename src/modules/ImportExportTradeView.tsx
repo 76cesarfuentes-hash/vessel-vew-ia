@@ -30,48 +30,66 @@ interface PortGeo {
   y: number; // 0..500
 }
 
-const KNOWN_PORT_COORDS: Record<string, PortGeo> = {
+function latLonToXy(lat: number, lon: number) {
+  const x = Math.round(((lon + 180) / 360) * 1000);
+  const y = Math.round(((90 - lat) / 180) * 500);
+  return { x, y };
+}
+
+const RAW_PORT_DATA: Record<string, { name: string; country: string; lat: number; lon: number }> = {
   // South America
-  CLSAI: { code: 'CLSAI', name: 'San Antonio', country: 'Chile', x: 288, y: 435 },
-  CLVAP: { code: 'CLVAP', name: 'Valparaíso', country: 'Chile', x: 286, y: 432 },
-  PECLL: { code: 'PECLL', name: 'Callao', country: 'Perú', x: 278, y: 305 },
-  ECMEC: { code: 'ECMEC', name: 'Guayaquil', country: 'Ecuador', x: 268, y: 268 },
-  BRSSZ: { code: 'BRSSZ', name: 'Santos', country: 'Brasil', x: 375, y: 355 },
-  ARBUE: { code: 'ARBUE', name: 'Buenos Aires', country: 'Argentina', x: 335, y: 425 },
+  CLSAI: { name: 'San Antonio', country: 'Chile', lat: -33.58, lon: -71.61 },
+  CLVAP: { name: 'Valparaíso', country: 'Chile', lat: -33.04, lon: -71.62 },
+  PECLL: { name: 'Callao', country: 'Perú', lat: -12.05, lon: -77.15 },
+  ECMEC: { name: 'Guayaquil', country: 'Ecuador', lat: -2.20, lon: -79.88 },
+  BRSSZ: { name: 'Santos', country: 'Brasil', lat: -23.96, lon: -46.33 },
+  ARBUE: { name: 'Buenos Aires', country: 'Argentina', lat: -34.60, lon: -58.38 },
 
   // North America & Central America
-  MXVER: { code: 'MXVER', name: 'Veracruz', country: 'México', x: 222, y: 198 },
-  VER: { code: 'MXVER', name: 'Veracruz', country: 'México', x: 222, y: 198 },
-  MXLZC: { code: 'MXLZC', name: 'Lázaro Cárdenas', country: 'México', x: 212, y: 195 },
-  LZC: { code: 'MXLZC', name: 'Lázaro Cárdenas', country: 'México', x: 212, y: 195 },
-  MXZLO: { code: 'MXZLO', name: 'Manzanillo', country: 'México', x: 208, y: 192 },
-  ZLO: { code: 'MXZLO', name: 'Manzanillo', country: 'México', x: 208, y: 192 },
-  USHOU: { code: 'USHOU', name: 'Houston', country: 'EE.UU.', x: 220, y: 175 },
-  HOU: { code: 'USHOU', name: 'Houston', country: 'EE.UU.', x: 220, y: 175 },
-  USLAX: { code: 'USLAX', name: 'Los Angeles', country: 'EE.UU.', x: 172, y: 155 },
-  LAX: { code: 'USLAX', name: 'Los Angeles', country: 'EE.UU.', x: 172, y: 155 },
-  USNYC: { code: 'USNYC', name: 'New York', country: 'EE.UU.', x: 285, y: 142 },
+  MXVER: { name: 'Veracruz', country: 'México', lat: 19.17, lon: -96.13 },
+  VER: { name: 'Veracruz', country: 'México', lat: 19.17, lon: -96.13 },
+  MXLZC: { name: 'Lázaro Cárdenas', country: 'México', lat: 17.95, lon: -102.18 },
+  LZC: { name: 'Lázaro Cárdenas', country: 'México', lat: 17.95, lon: -102.18 },
+  MXZLO: { name: 'Manzanillo', country: 'México', lat: 19.05, lon: -104.31 },
+  ZLO: { name: 'Manzanillo', country: 'México', lat: 19.05, lon: -104.31 },
+  USHOU: { name: 'Houston', country: 'EE.UU.', lat: 29.76, lon: -95.36 },
+  HOU: { name: 'Houston', country: 'EE.UU.', lat: 29.76, lon: -95.36 },
+  USLAX: { name: 'Los Angeles', country: 'EE.UU.', lat: 33.74, lon: -118.27 },
+  LAX: { name: 'Los Angeles', country: 'EE.UU.', lat: 33.74, lon: -118.27 },
+  USNYC: { name: 'New York', country: 'EE.UU.', lat: 40.71, lon: -74.00 },
 
   // Europe
-  NLRTM: { code: 'NLRTM', name: 'Rotterdam', country: 'Países Bajos', x: 495, y: 118 },
-  DEHAM: { code: 'DEHAM', name: 'Hamburg', country: 'Alemania', x: 518, y: 112 },
-  GBLON: { code: 'GBLON', name: 'London', country: 'Reino Unido', x: 488, y: 115 },
-  ESBCN: { code: 'ESBCN', name: 'Barcelona', country: 'España', x: 492, y: 142 },
+  NLRTM: { name: 'Rotterdam', country: 'Países Bajos', lat: 51.92, lon: 4.47 },
+  DEHAM: { name: 'Hamburg', country: 'Alemania', lat: 53.55, lon: 9.99 },
+  GBLON: { name: 'London', country: 'Reino Unido', lat: 51.50, lon: -0.12 },
+  ESBCN: { name: 'Barcelona', country: 'España', lat: 41.38, lon: 2.17 },
 
   // Asia
-  CNSHA: { code: 'CNSHA', name: 'Shanghai', country: 'China', x: 840, y: 160 },
-  SHA: { code: 'CNSHA', name: 'Shanghai', country: 'China', x: 840, y: 160 },
-  SGSIN: { code: 'SGSIN', name: 'Singapore', country: 'Singapur', x: 788, y: 238 },
-  HKHKG: { code: 'HKHKG', name: 'Hong Kong', country: 'China', x: 820, y: 178 },
-  HKG: { code: 'HKHKG', name: 'Hong Kong', country: 'China', x: 820, y: 178 },
-  KRPUS: { code: 'KRPUS', name: 'Busan', country: 'Corea del Sur', x: 850, y: 145 },
-  PUS: { code: 'KRPUS', name: 'Busan', country: 'Corea del Sur', x: 850, y: 145 },
-  JPYOK: { code: 'JPYOK', name: 'Yokohama', country: 'Japón', x: 872, y: 148 },
+  CNSHA: { name: 'Shanghai', country: 'China', lat: 31.23, lon: 121.47 },
+  SHA: { name: 'Shanghai', country: 'China', lat: 31.23, lon: 121.47 },
+  SGSIN: { name: 'Singapore', country: 'Singapur', lat: 1.35, lon: 103.81 },
+  HKHKG: { name: 'Hong Kong', country: 'China', lat: 22.31, lon: 114.16 },
+  HKG: { name: 'Hong Kong', country: 'China', lat: 22.31, lon: 114.16 },
+  KRPUS: { name: 'Busan', country: 'Corea del Sur', lat: 35.17, lon: 129.07 },
+  PUS: { name: 'Busan', country: 'Corea del Sur', lat: 35.17, lon: 129.07 },
+  JPYOK: { name: 'Yokohama', country: 'Japón', lat: 35.44, lon: 139.63 },
 
   // Oceania & Africa
-  AUSYD: { code: 'AUSYD', name: 'Sydney', country: 'Australia', x: 910, y: 335 },
-  ZADUR: { code: 'ZADUR', name: 'Durban', country: 'Sudáfrica', x: 575, y: 345 }
+  AUSYD: { name: 'Sydney', country: 'Australia', lat: -33.86, lon: 151.20 },
+  ZADUR: { name: 'Durban', country: 'Sudáfrica', lat: -29.85, lon: 31.02 }
 };
+
+const KNOWN_PORT_COORDS: Record<string, PortGeo> = Object.entries(RAW_PORT_DATA).reduce((acc, [code, p]) => {
+  const { x, y } = latLonToXy(p.lat, p.lon);
+  acc[code] = {
+    code,
+    name: p.name,
+    country: p.country,
+    x,
+    y
+  };
+  return acc;
+}, {} as Record<string, PortGeo>);
 
 // Fallback generator for unmapped port codes using deterministic string hashing
 function getPortCoords(portCode: string): PortGeo {
