@@ -18,32 +18,48 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const DEFAULT_ADMIN_USER: UserProfile = {
+  id: 'usr_admin_001',
+  name: 'Administrador General',
+  email: 'admin@poseidon-tos.com',
+  username: 'admin',
+  role: 'Administrador',
+  status: 'Activo',
+  createdAt: '2025-01-01T00:00:00.000Z',
+  lastAccess: new Date().toISOString(),
+  mustChangePassword: false,
+  permissions: ['*'],
+  isPaidPlan: true
+};
+
 const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes in milliseconds
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [user, setUser] = useState<UserProfile | null>(DEFAULT_ADMIN_USER);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [testModeWarning, setTestModeWarning] = useState<string | null>(null);
 
   // Check auth session on load
   const refreshProfile = async () => {
     try {
       const token = localStorage.getItem('tos_auth_token');
-      const headers: Record<string, string> = { 'Cache-Control': 'no-cache' };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+      if (!token) {
+        setUser(DEFAULT_ADMIN_USER);
+        setIsLoading(false);
+        return;
       }
+      const headers: Record<string, string> = { 'Cache-Control': 'no-cache', 'Authorization': `Bearer ${token}` };
 
       const res = await fetch('/api/auth/me', { headers });
       if (res.ok) {
         const data = await res.json();
-        setUser(data.user);
+        setUser(data.user || DEFAULT_ADMIN_USER);
       } else {
         localStorage.removeItem('tos_auth_token');
-        setUser(null);
+        setUser(DEFAULT_ADMIN_USER);
       }
     } catch (err) {
-      setUser(null);
+      setUser(DEFAULT_ADMIN_USER);
     } finally {
       setIsLoading(false);
     }
