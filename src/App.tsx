@@ -23,6 +23,7 @@ import { MovimientosModuleView } from './modules/MovimientosModuleView';
 import { ManualAdjustmentEngineView } from './modules/ManualAdjustmentEngineView';
 import { AutoStowagePlannerView } from './modules/AutoStowagePlannerView';
 import { TongaPatioChessSimView } from './modules/TongaPatioChessSimView';
+import { GlobalTradeMapView } from './modules/GlobalTradeMapView';
 
 import { generateSampleBaplieContainers } from './core/parser/demoData';
 
@@ -32,6 +33,7 @@ import appLogoJpg from './assets/logo.jpg';
 
 import { ShareTransmitModal } from './components/common/ShareTransmitModal';
 import { PoseidonSimulationModal } from './components/common/PoseidonSimulationModal';
+import { UpgradeToPlannerModal } from './components/common/UpgradeToPlannerModal';
 
 import {
   Grid,
@@ -54,7 +56,9 @@ import {
   Tv,
   ShieldCheck,
   Crown,
-  Truck
+  Truck,
+  Lock,
+  Globe
 } from 'lucide-react';
 
 export default function App() {
@@ -83,14 +87,29 @@ export default function App() {
     setContainers
   } = useStowageStore();
 
-  const [activeTab, setActiveTab] = useState<'estiba' | 'planos' | 'cuadre' | 'movins' | 'agents' | 'comparador' | 'miniplanpro' | 'movimientos' | 'manual-engine' | 'auto-excel' | 'tonga-patio'>('estiba');
+  const [activeTab, setActiveTab] = useState<'estiba' | 'planos' | 'cuadre' | 'movins' | 'agents' | 'comparador' | 'miniplanpro' | 'movimientos' | 'manual-engine' | 'auto-excel' | 'tonga-patio' | 'mapa-mundial'>('estiba');
 
   const [isManoMasLargaModalOpen, setIsManoMasLargaModalOpen] = useState<boolean>(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState<boolean>(false);
   const [isSimModalOpen, setIsSimModalOpen] = useState<boolean>(true);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState<boolean>(false);
+  const [attemptedTabName, setAttemptedTabName] = useState<string>('');
 
   const [sidebarLogoSrc, setSidebarLogoSrc] = useState<string>(appLogoGenerated || appLogoPng || appLogoJpg);
   const [sidebarLogoFailed, setSidebarLogoFailed] = useState<boolean>(false);
+
+  // Paid Mode Check
+  const isPaidUser = user?.isPaidPlan === true || user?.role === 'Administrador' || user?.role === 'Planner' || user?.role === 'Supervisor' || user?.role === 'Operador';
+
+  // Secure Navigation Handler
+  const handleTabChange = (tab: typeof activeTab, tabLabel: string) => {
+    if (tab === 'estiba' || isPaidUser) {
+      setActiveTab(tab);
+    } else {
+      setAttemptedTabName(tabLabel);
+      setIsUpgradeModalOpen(true);
+    }
+  };
 
   const handleSidebarLogoError = () => {
     if (sidebarLogoSrc === appLogoGenerated) {
@@ -189,7 +208,7 @@ export default function App() {
 
         {/* Navigation Items */}
         <button
-          onClick={() => setActiveTab('estiba')}
+          onClick={() => handleTabChange('estiba', 'Matriz de Estiba Principal')}
           className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
             activeTab === 'estiba'
               ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50 shadow-[0_0_12px_rgba(0,229,255,0.4)]'
@@ -201,123 +220,146 @@ export default function App() {
         </button>
 
         <button
-          onClick={() => setActiveTab('planos')}
-          className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
+          onClick={() => handleTabChange('planos', 'Reportes y Mini-Planos')}
+          className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer relative ${
             activeTab === 'planos'
               ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50 shadow-[0_0_12px_rgba(0,229,255,0.4)]'
               : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
           }`}
-          title="Reportes & Mini-Planos"
+          title={isPaidUser ? "Reportes & Mini-Planos" : "🔒 Función del Modo de Paga (Planner)"}
         >
           <Layers className="w-5 h-5" />
+          {!isPaidUser && <Lock className="w-3 h-3 text-amber-400 absolute top-1 right-1" />}
         </button>
 
         <button
-          onClick={() => setActiveTab('cuadre')}
-          className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
+          onClick={() => handleTabChange('cuadre', 'Cuadre Inteligente Excel')}
+          className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer relative ${
             activeTab === 'cuadre'
               ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50 shadow-[0_0_12px_rgba(0,229,255,0.4)]'
               : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
           }`}
-          title="Cuadre Inteligente / Reconciliación Excel"
+          title={isPaidUser ? "Cuadre Inteligente / Reconciliación Excel" : "🔒 Función del Modo de Paga (Planner)"}
         >
           <ArrowRightLeft className="w-5 h-5" />
+          {!isPaidUser && <Lock className="w-3 h-3 text-amber-400 absolute top-1 right-1" />}
         </button>
 
         <button
-          onClick={() => setActiveTab('movins')}
-          className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
+          onClick={() => handleTabChange('movins', 'Validador MOVINS EDI')}
+          className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer relative ${
             activeTab === 'movins'
               ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50 shadow-[0_0_12px_rgba(0,229,255,0.4)]'
               : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
           }`}
-          title="Validador MOVINS (EDI)"
+          title={isPaidUser ? "Validador MOVINS (EDI)" : "🔒 Función del Modo de Paga (Planner)"}
         >
           <FileCode className="w-5 h-5" />
+          {!isPaidUser && <Lock className="w-3 h-3 text-amber-400 absolute top-1 right-1" />}
         </button>
 
         <button
-          onClick={() => setActiveTab('agents')}
-          className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
+          onClick={() => handleTabChange('agents', 'Agentes IA y Copilot')}
+          className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer relative ${
             activeTab === 'agents'
               ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50 shadow-[0_0_12px_rgba(0,229,255,0.4)]'
               : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
           }`}
-          title="Agentes AI (Auditor, Solucionador, Copilot)"
+          title={isPaidUser ? "Agentes AI (Auditor, Solucionador, Copilot)" : "🔒 Función del Modo de Paga (Planner)"}
         >
           <Bot className="w-5 h-5" />
+          {!isPaidUser && <Lock className="w-3 h-3 text-amber-400 absolute top-1 right-1" />}
         </button>
 
         <button
-          onClick={() => setActiveTab('miniplanpro')}
-          className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
+          onClick={() => handleTabChange('miniplanpro', 'Mini Plan de Estiba Modo Pro')}
+          className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer relative ${
             activeTab === 'miniplanpro'
               ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50 shadow-[0_0_12px_rgba(0,229,255,0.4)]'
               : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
           }`}
-          title="Mini Plan de Estiba Modo Pro (Executive Replica)"
+          title={isPaidUser ? "Mini Plan de Estiba Modo Pro" : "🔒 Función del Modo de Paga (Planner)"}
         >
           <Ship className="w-5 h-5 text-amber-400" />
+          {!isPaidUser && <Lock className="w-3 h-3 text-amber-400 absolute top-1 right-1" />}
         </button>
 
         <button
-          onClick={() => setActiveTab('movimientos')}
-          className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
+          onClick={() => handleTabChange('movimientos', 'Módulo Movimientos por Bahía')}
+          className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer relative ${
             activeTab === 'movimientos'
               ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50 shadow-[0_0_12px_rgba(245,158,11,0.4)]'
               : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
           }`}
-          title="Módulo Movimientos por Bahía (Mano Más Larga)"
+          title={isPaidUser ? "Módulo Movimientos por Bahía" : "🔒 Función del Modo de Paga (Planner)"}
         >
           <BarChart3 className="w-5 h-5 text-amber-400" />
+          {!isPaidUser && <Lock className="w-3 h-3 text-amber-400 absolute top-1 right-1" />}
         </button>
 
         <button
-          onClick={() => setActiveTab('manual-engine')}
-          className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
+          onClick={() => handleTabChange('manual-engine', 'Módulo Ajuste Mini Planos')}
+          className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer relative ${
             activeTab === 'manual-engine'
               ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50 shadow-[0_0_12px_rgba(0,229,255,0.4)]'
               : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
           }`}
-          title="Módulo Ajuste (Mini Planos & Recap)"
+          title={isPaidUser ? "Módulo Ajuste (Mini Planos & Recap)" : "🔒 Función del Modo de Paga (Planner)"}
         >
           <Sliders className="w-5 h-5 text-cyan-400" />
+          {!isPaidUser && <Lock className="w-3 h-3 text-amber-400 absolute top-1 right-1" />}
         </button>
 
         <button
-          onClick={() => setActiveTab('tonga-patio')}
-          className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
+          onClick={() => handleTabChange('tonga-patio', 'Tonga de Patio y Ajedrez RTG')}
+          className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer relative ${
             activeTab === 'tonga-patio'
               ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50 shadow-[0_0_12px_rgba(245,158,11,0.4)]'
               : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
           }`}
-          title="Tonga de Patio: Simulación por Carril, Tira, Altura y Reglas de Ajedrez"
+          title={isPaidUser ? "Tonga de Patio: Simulación por Carril, Tira, Altura y Reglas de Ajedrez" : "🔒 Función del Modo de Paga (Planner)"}
         >
           <Crown className="w-5 h-5 text-amber-400" />
+          {!isPaidUser && <Lock className="w-3 h-3 text-amber-400 absolute top-1 right-1" />}
         </button>
 
         <button
-          onClick={() => setActiveTab('auto-excel')}
-          className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
+          onClick={() => handleTabChange('auto-excel', 'Estiba Automática desde Excel')}
+          className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer relative ${
             activeTab === 'auto-excel'
               ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 shadow-[0_0_12px_rgba(16,185,129,0.4)]'
               : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
           }`}
-          title="Estiba Automática desde Excel de Patio"
+          title={isPaidUser ? "Estiba Automática desde Excel de Patio" : "🔒 Función del Modo de Paga (Planner)"}
         >
           <Zap className="w-5 h-5 text-emerald-400" />
+          {!isPaidUser && <Lock className="w-3 h-3 text-amber-400 absolute top-1 right-1" />}
         </button>
 
         <button
-          onClick={() => setActiveTab('comparador')}
-          className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
+          onClick={() => handleTabChange('comparador', 'Comparador de BAPLIEs')}
+          className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer relative ${
             activeTab === 'comparador'
               ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50 shadow-[0_0_12px_rgba(0,229,255,0.4)]'
               : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
           }`}
-          title="Comparador de Versiones BAPLIE"
+          title={isPaidUser ? "Comparador de Versiones BAPLIE" : "🔒 Función del Modo de Paga (Planner)"}
         >
           <GitCompare className="w-5 h-5" />
+          {!isPaidUser && <Lock className="w-3 h-3 text-amber-400 absolute top-1 right-1" />}
+        </button>
+
+        <button
+          onClick={() => handleTabChange('mapa-mundial', 'Mapa Mundial de Comercio Marítimo')}
+          className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer relative ${
+            activeTab === 'mapa-mundial'
+              ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50 shadow-[0_0_12px_rgba(0,229,255,0.4)]'
+              : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+          }`}
+          title={isPaidUser ? "Mapa Mundial de Comercio Marítimo (Importación/Exportación)" : "🔒 Función del Modo de Paga (Planner)"}
+        >
+          <Globe className="w-5 h-5 text-cyan-400 animate-spin-slow" />
+          {!isPaidUser && <Lock className="w-3 h-3 text-amber-400 absolute top-1 right-1" />}
         </button>
 
         <div className="w-6 h-[1px] bg-slate-800 my-1" />
@@ -334,7 +376,7 @@ export default function App() {
       {/* ── MOBILE / TABLET BOTTOM NAVIGATION BAR (SMALL SCREENS) ── */}
       <nav className="flex md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0D1E30]/95 backdrop-blur-md border-t border-slate-800/90 px-1 py-1.5 justify-around items-center h-14 shadow-2xl">
         <button
-          onClick={() => setActiveTab('estiba')}
+          onClick={() => handleTabChange('estiba', 'Estiba')}
           className={`flex flex-col items-center justify-center flex-1 py-1 px-0.5 rounded text-[10px] font-mono transition-all ${
             activeTab === 'estiba' ? 'text-cyan-400 font-bold bg-cyan-950/60' : 'text-slate-400'
           }`}
@@ -344,88 +386,126 @@ export default function App() {
         </button>
 
         <button
-          onClick={() => setActiveTab('planos')}
-          className={`flex flex-col items-center justify-center flex-1 py-1 px-0.5 rounded text-[10px] font-mono transition-all ${
+          onClick={() => handleTabChange('planos', 'Planos')}
+          className={`flex flex-col items-center justify-center flex-1 py-1 px-0.5 rounded text-[10px] font-mono transition-all relative ${
             activeTab === 'planos' ? 'text-cyan-400 font-bold bg-cyan-950/60' : 'text-slate-400'
           }`}
         >
           <Layers className="w-4 h-4 mb-0.5" />
           <span>Planos</span>
+          {!isPaidUser && <Lock className="w-2.5 h-2.5 text-amber-400 absolute top-0.5 right-1" />}
         </button>
 
         <button
-          onClick={() => setActiveTab('cuadre')}
-          className={`flex flex-col items-center justify-center flex-1 py-1 px-0.5 rounded text-[10px] font-mono transition-all ${
+          onClick={() => handleTabChange('cuadre', 'Cuadre')}
+          className={`flex flex-col items-center justify-center flex-1 py-1 px-0.5 rounded text-[10px] font-mono transition-all relative ${
             activeTab === 'cuadre' ? 'text-cyan-400 font-bold bg-cyan-950/60' : 'text-slate-400'
           }`}
         >
           <ArrowRightLeft className="w-4 h-4 mb-0.5" />
           <span>Cuadre</span>
+          {!isPaidUser && <Lock className="w-2.5 h-2.5 text-amber-400 absolute top-0.5 right-1" />}
         </button>
 
         <button
-          onClick={() => setActiveTab('movins')}
-          className={`flex flex-col items-center justify-center flex-1 py-1 px-0.5 rounded text-[10px] font-mono transition-all ${
+          onClick={() => handleTabChange('movins', 'MOVINS')}
+          className={`flex flex-col items-center justify-center flex-1 py-1 px-0.5 rounded text-[10px] font-mono transition-all relative ${
             activeTab === 'movins' ? 'text-cyan-400 font-bold bg-cyan-950/60' : 'text-slate-400'
           }`}
         >
           <FileCode className="w-4 h-4 mb-0.5" />
           <span>MOVINS</span>
+          {!isPaidUser && <Lock className="w-2.5 h-2.5 text-amber-400 absolute top-0.5 right-1" />}
         </button>
 
         <button
-          onClick={() => setActiveTab('movimientos')}
-          className={`flex flex-col items-center justify-center flex-1 py-1 px-0.5 rounded text-[10px] font-mono transition-all ${
+          onClick={() => handleTabChange('movimientos', 'Bahías')}
+          className={`flex flex-col items-center justify-center flex-1 py-1 px-0.5 rounded text-[10px] font-mono transition-all relative ${
             activeTab === 'movimientos' ? 'text-amber-400 font-bold bg-amber-950/60' : 'text-slate-400'
           }`}
         >
           <BarChart3 className="w-4 h-4 mb-0.5 text-amber-400" />
           <span>Bahías</span>
+          {!isPaidUser && <Lock className="w-2.5 h-2.5 text-amber-400 absolute top-0.5 right-1" />}
         </button>
 
         <button
-          onClick={() => setActiveTab('miniplanpro')}
-          className={`flex flex-col items-center justify-center flex-1 py-1 px-0.5 rounded text-[10px] font-mono transition-all ${
+          onClick={() => handleTabChange('miniplanpro', 'MiniPlan Pro')}
+          className={`flex flex-col items-center justify-center flex-1 py-1 px-0.5 rounded text-[10px] font-mono transition-all relative ${
             activeTab === 'miniplanpro' ? 'text-cyan-400 font-bold bg-cyan-950/60' : 'text-slate-400'
           }`}
         >
           <Ship className="w-4 h-4 mb-0.5 text-amber-400" />
           <span>Pro</span>
+          {!isPaidUser && <Lock className="w-2.5 h-2.5 text-amber-400 absolute top-0.5 right-1" />}
         </button>
 
         <button
-          onClick={() => setActiveTab('tonga-patio')}
-          className={`flex flex-col items-center justify-center flex-1 py-1 px-0.5 rounded text-[10px] font-mono transition-all ${
+          onClick={() => handleTabChange('tonga-patio', 'Tonga Patio')}
+          className={`flex flex-col items-center justify-center flex-1 py-1 px-0.5 rounded text-[10px] font-mono transition-all relative ${
             activeTab === 'tonga-patio' ? 'text-amber-400 font-bold bg-amber-950/60' : 'text-slate-400'
           }`}
         >
           <Crown className="w-4 h-4 mb-0.5 text-amber-400" />
           <span>Tonga</span>
+          {!isPaidUser && <Lock className="w-2.5 h-2.5 text-amber-400 absolute top-0.5 right-1" />}
         </button>
 
         <button
-          onClick={() => setActiveTab('agents')}
-          className={`flex flex-col items-center justify-center flex-1 py-1 px-0.5 rounded text-[10px] font-mono transition-all ${
+          onClick={() => handleTabChange('agents', 'Copilot AI')}
+          className={`flex flex-col items-center justify-center flex-1 py-1 px-0.5 rounded text-[10px] font-mono transition-all relative ${
             activeTab === 'agents' ? 'text-cyan-400 font-bold bg-cyan-950/60' : 'text-slate-400'
           }`}
         >
           <Bot className="w-4 h-4 mb-0.5" />
           <span>AI</span>
+          {!isPaidUser && <Lock className="w-2.5 h-2.5 text-amber-400 absolute top-0.5 right-1" />}
+        </button>
+
+        <button
+          onClick={() => handleTabChange('mapa-mundial', 'Mapa Mundial')}
+          className={`flex flex-col items-center justify-center flex-1 py-1 px-0.5 rounded text-[10px] font-mono transition-all relative ${
+            activeTab === 'mapa-mundial' ? 'text-cyan-400 font-bold bg-cyan-950/60' : 'text-slate-400'
+          }`}
+        >
+          <Globe className="w-4 h-4 mb-0.5 text-cyan-400" />
+          <span>Mapa</span>
+          {!isPaidUser && <Lock className="w-2.5 h-2.5 text-amber-400 absolute top-0.5 right-1" />}
         </button>
       </nav>
 
       {/* ── MAIN LAYOUT SHELL ── */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden pb-14 md:pb-0">
-        {/* Test Mode Warning Banner */}
-        {testModeWarning && (
-          <div className="bg-amber-950/90 border-b border-amber-500/50 px-4 py-1.5 text-amber-200 text-xs font-mono flex items-center justify-between gap-2 z-40 animate-fadeIn">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-              <span>{testModeWarning}</span>
-            </div>
-            <span className="text-[10px] text-amber-400 uppercase font-bold">Modo Prueba 5 Acceso IP</span>
+        {/* Tier Access Status Bar */}
+        <div className={`px-4 py-1.5 text-xs font-mono flex items-center justify-between gap-2 z-40 animate-fadeIn border-b ${
+          isPaidUser
+            ? 'bg-gradient-to-r from-emerald-950/90 via-slate-900 to-cyan-950/90 border-emerald-500/40 text-emerald-300'
+            : 'bg-gradient-to-r from-amber-950/90 via-slate-900 to-amber-900/90 border-amber-500/50 text-amber-200'
+        }`}>
+          <div className="flex items-center gap-2">
+            {isPaidUser ? (
+              <span className="flex items-center gap-1.5 font-bold text-emerald-400">
+                <Crown className="w-3.5 h-3.5 text-amber-400" />
+                <span>MODO DE PAGA ACTIVO: ACCESO TOTAL A TODAS LAS HERRAMIENTAS Y MATRICES</span>
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 font-bold">
+                <Lock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span>MODO GRATUITO: Solo 1ª Ventana disponible (Plano de Estiba) • Sesión {user?.sessionCount || 1} de 5</span>
+              </span>
+            )}
           </div>
-        )}
+
+          {!isPaidUser && (
+            <button
+              onClick={() => { setAttemptedTabName('Herramientas Avanzadas'); setIsUpgradeModalOpen(true); }}
+              className="px-2.5 py-0.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded text-[10px] uppercase tracking-wider transition-colors cursor-pointer flex items-center gap-1 shadow shrink-0"
+            >
+              <Crown className="w-3 h-3" />
+              <span>DESBLOQUEAR PLANNER</span>
+            </button>
+          )}
+        </div>
 
         {/* Top Breadcrumb & Action Header */}
         <header className="flex-shrink-0 bg-[#0A1A29] border-b border-slate-800 px-3 md:px-5 py-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 z-30">
@@ -560,6 +640,7 @@ export default function App() {
           {activeTab === 'manual-engine' && <ManualAdjustmentEngineView />}
           {activeTab === 'auto-excel' && <AutoStowagePlannerView />}
           {activeTab === 'tonga-patio' && <TongaPatioChessSimView />}
+          {activeTab === 'mapa-mundial' && <GlobalTradeMapView />}
         </main>
       </div>
 
@@ -600,6 +681,12 @@ export default function App() {
       <PoseidonSimulationModal
         isOpen={isSimModalOpen}
         onClose={() => setIsSimModalOpen(false)}
+      />
+      {/* Upgrade to Planner Modal for Guest Users */}
+      <UpgradeToPlannerModal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+        tabName={attemptedTabName}
       />
     </div>
   );

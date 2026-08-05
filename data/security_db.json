@@ -1,0 +1,215 @@
+{
+  "users": [
+    {
+      "id": "usr_admin_001",
+      "name": "Programador Administrador",
+      "email": "admin.tos@terminal.com",
+      "username": "admin",
+      "passwordHash": "$2b$12$w4IHDJNZAEkL1V/CnDSqZ.keqP0tqpsg/uIODRJDWGEyNRawQ6mki",
+      "role": "Administrador",
+      "status": "Activo",
+      "createdAt": "2026-08-05T05:18:24.016Z",
+      "lastAccess": null,
+      "mustChangePassword": false,
+      "isPaidPlan": true
+    },
+    {
+      "id": "usr_planner_001",
+      "name": "Planificador de Estiba (Paga)",
+      "email": "planner@terminal.com",
+      "username": "planner",
+      "passwordHash": "$2b$12$38Ql3U/luxP/L2Orp3eg3OjukV701ZzUv/2P7MIA2neaZ5Fp6bF/O",
+      "role": "Planner",
+      "status": "Activo",
+      "createdAt": "2026-08-05T05:18:24.401Z",
+      "lastAccess": null,
+      "mustChangePassword": false,
+      "isPaidPlan": true
+    }
+  ],
+  "rolesPermissions": [
+    {
+      "role": "Administrador",
+      "permissions": [
+        "VIEW_DASHBOARD",
+        "VIEW_BAIAS",
+        "VIEW_MINIPLAN",
+        "VIEW_RECAP",
+        "VIEW_MOVINS",
+        "USE_AI_COPILOT",
+        "UPLOAD_FILES",
+        "EXECUTE_STOWAGE_ADJUST",
+        "EXPORT_REPORTS",
+        "MANAGE_USERS",
+        "VIEW_AUDIT_LOGS"
+      ]
+    },
+    {
+      "role": "Planner",
+      "permissions": [
+        "VIEW_DASHBOARD",
+        "VIEW_BAIAS",
+        "VIEW_MINIPLAN",
+        "VIEW_RECAP",
+        "VIEW_MOVINS",
+        "USE_AI_COPILOT",
+        "UPLOAD_FILES",
+        "EXECUTE_STOWAGE_ADJUST",
+        "EXPORT_REPORTS",
+        "MANAGE_USERS",
+        "VIEW_AUDIT_LOGS"
+      ]
+    },
+    {
+      "role": "Supervisor",
+      "permissions": [
+        "VIEW_DASHBOARD",
+        "VIEW_BAIAS",
+        "VIEW_MINIPLAN",
+        "VIEW_RECAP",
+        "VIEW_MOVINS",
+        "USE_AI_COPILOT",
+        "UPLOAD_FILES",
+        "EXECUTE_STOWAGE_ADJUST",
+        "EXPORT_REPORTS",
+        "VIEW_AUDIT_LOGS"
+      ]
+    },
+    {
+      "role": "Operador",
+      "permissions": [
+        "VIEW_DASHBOARD",
+        "VIEW_BAIAS",
+        "VIEW_MINIPLAN",
+        "VIEW_RECAP",
+        "VIEW_MOVINS",
+        "USE_AI_COPILOT",
+        "UPLOAD_FILES",
+        "EXECUTE_STOWAGE_ADJUST",
+        "EXPORT_REPORTS"
+      ]
+    },
+    {
+      "role": "Consulta",
+      "permissions": [
+        "VIEW_DASHBOARD"
+      ]
+    },
+    {
+      "role": "Invitado",
+      "permissions": [
+        "VIEW_DASHBOARD"
+      ]
+    }
+  ],
+  "permissions": [
+    {
+      "code": "VIEW_DASHBOARD",
+      "name": "Ver Dashboard",
+      "description": "Acceso a matriz y vista principal"
+    },
+    {
+      "code": "VIEW_BAIAS",
+      "name": "Ver Bahías y Planos",
+      "description": "Visualización de cortes y bahías"
+    },
+    {
+      "code": "VIEW_MINIPLAN",
+      "name": "Ver Mini Plan",
+      "description": "Acceso al Mini Plan Pro"
+    },
+    {
+      "code": "VIEW_RECAP",
+      "name": "Ver Cuadre y Recap POD",
+      "description": "Consultas de conciliación y recap"
+    },
+    {
+      "code": "VIEW_MOVINS",
+      "name": "Ver Validador MOVINS",
+      "description": "Auditoría de archivos MOVINS"
+    },
+    {
+      "code": "USE_AI_COPILOT",
+      "name": "Usar Agente de IA",
+      "description": "Interacción con el Copilot de Voz e IA"
+    },
+    {
+      "code": "UPLOAD_FILES",
+      "name": "Cargar EDI (BAPLIE/MOVINS)",
+      "description": "Capacidad de importar BAPLIE o MOVINS"
+    },
+    {
+      "code": "EXECUTE_STOWAGE_ADJUST",
+      "name": "Ejecutar Ajustes de Estiba",
+      "description": "Modificar la posición de contenedores"
+    },
+    {
+      "code": "EXPORT_REPORTS",
+      "name": "Exportar Datos (PDF/Excel)",
+      "description": "Descarga de reportes operativos"
+    },
+    {
+      "code": "MANAGE_USERS",
+      "name": "Administración de Usuarios",
+      "description": "Creación y edición de cuentas de usuario"
+    },
+    {
+      "code": "VIEW_AUDIT_LOGS",
+      "name": "Ver Auditoría de Seguridad",
+      "description": "Acceso a registros de eventos y logs"
+    }
+  ],
+  "sessions": [],
+  "auditLogs": [
+    {
+      "id": "aud_1785907145267_tq3l3",
+      "timestamp": "2026-08-05T05:19:05.267Z",
+      "userId": "usr_admin_001",
+      "username": "admin",
+      "userRole": "Administrador",
+      "action": "LOGIN",
+      "result": "FAILED",
+      "ip": "2806:268:487:1082:48a8:414a:cbfe:383c",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+      "details": "Intento de contraseña erróneo (1/5)."
+    },
+    {
+      "id": "aud_1785907329335_7uhsv",
+      "timestamp": "2026-08-05T05:22:09.335Z",
+      "userId": "usr_admin_001",
+      "username": "admin",
+      "userRole": "Administrador",
+      "action": "LOGIN",
+      "result": "FAILED",
+      "ip": "2806:268:487:1082:48a8:414a:cbfe:383c",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+      "details": "Intento de contraseña erróneo (2/5)."
+    },
+    {
+      "id": "aud_1785907346052_an8pj",
+      "timestamp": "2026-08-05T05:22:26.052Z",
+      "userId": "usr_admin_001",
+      "username": "admin",
+      "userRole": "Administrador",
+      "action": "LOGIN",
+      "result": "FAILED",
+      "ip": "2806:268:487:1082:48a8:414a:cbfe:383c",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+      "details": "Intento de contraseña erróneo (3/5)."
+    },
+    {
+      "id": "aud_1785907398012_elruk",
+      "timestamp": "2026-08-05T05:23:18.012Z",
+      "userId": "usr_admin_001",
+      "username": "admin",
+      "userRole": "Administrador",
+      "action": "LOGIN",
+      "result": "FAILED",
+      "ip": "2806:268:487:1082:48a8:414a:cbfe:383c",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+      "details": "Intento de contraseña erróneo (1/5)."
+    }
+  ],
+  "failedLogins": [],
+  "passwordHistory": []
+}

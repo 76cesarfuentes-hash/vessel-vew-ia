@@ -46,6 +46,10 @@ const DEFAULT_ROLE_PERMISSIONS: RolePermissions[] = [
     permissions: DEFAULT_PERMISSIONS.map(p => p.code)
   },
   {
+    role: 'Planner',
+    permissions: DEFAULT_PERMISSIONS.map(p => p.code)
+  },
+  {
     role: 'Supervisor',
     permissions: [
       'VIEW_DASHBOARD', 'VIEW_BAIAS', 'VIEW_MINIPLAN', 'VIEW_RECAP',
@@ -63,9 +67,11 @@ const DEFAULT_ROLE_PERMISSIONS: RolePermissions[] = [
   },
   {
     role: 'Consulta',
-    permissions: [
-      'VIEW_DASHBOARD', 'VIEW_BAIAS', 'VIEW_MINIPLAN', 'VIEW_RECAP', 'VIEW_MOVINS'
-    ]
+    permissions: ['VIEW_DASHBOARD']
+  },
+  {
+    role: 'Invitado',
+    permissions: ['VIEW_DASHBOARD']
   }
 ];
 
@@ -96,8 +102,8 @@ class SecurityDatabase {
         const parsed = JSON.parse(fileContent);
         this.data = {
           users: parsed.users || [],
-          rolesPermissions: parsed.rolesPermissions || DEFAULT_ROLE_PERMISSIONS,
-          permissions: parsed.permissions || DEFAULT_PERMISSIONS,
+          rolesPermissions: DEFAULT_ROLE_PERMISSIONS,
+          permissions: DEFAULT_PERMISSIONS,
           sessions: parsed.sessions || [],
           auditLogs: parsed.auditLogs || [],
           failedLogins: parsed.failedLogins || [],
@@ -106,41 +112,69 @@ class SecurityDatabase {
         };
       }
 
-      // Ensure initial admin user exists securely and has correct password hash
-      const initialUser = process.env.INITIAL_ADMIN_USER || 'admin_tos';
-      const initialPass = process.env.INITIAL_ADMIN_PASS || 'Michael01$';
-      const passwordHash = bcrypt.hashSync(initialPass, 12);
-
+      // 1. Ensure Admin User (Programador / Admin)
+      const adminPassHash = bcrypt.hashSync('Michael01$', 12);
       let adminUser = this.data.users.find(
-        u => u.username.toLowerCase() === 'admin_tos' || u.username.toLowerCase() === 'admin' || u.id === 'usr_admin_001'
+        u => u.username.toLowerCase() === 'admin' || u.username.toLowerCase() === 'michael' || u.username.toLowerCase() === 'michael01' || u.username.toLowerCase() === 'admin_tos' || u.username.toLowerCase() === 'programador' || u.id === 'usr_admin_001'
       );
 
       if (!adminUser) {
         adminUser = {
           id: 'usr_admin_001',
-          name: 'Administrador del Sistema',
+          name: 'Michael - Administrador',
           email: 'admin.tos@terminal.com',
-          username: initialUser,
-          passwordHash: passwordHash,
+          username: 'admin',
+          passwordHash: adminPassHash,
           role: 'Administrador',
           status: 'Activo',
           createdAt: new Date().toISOString(),
           lastAccess: null,
-          mustChangePassword: false
+          mustChangePassword: false,
+          isPaidPlan: true
         };
         this.data.users.push(adminUser);
       } else {
-        // Reset admin password to default valid hash and status to active
-        adminUser.username = 'admin_tos';
-        adminUser.passwordHash = passwordHash;
+        adminUser.username = 'admin';
+        adminUser.passwordHash = adminPassHash;
         adminUser.role = 'Administrador';
         adminUser.status = 'Activo';
         adminUser.mustChangePassword = false;
+        adminUser.isPaidPlan = true;
       }
 
-      // Clear any previous failed logins for admin
+      // 2. Ensure Planner User (Modo de Paga)
+      const plannerPassHash = bcrypt.hashSync('Planner123$!', 12);
+      let plannerUser = this.data.users.find(
+        u => u.username.toLowerCase() === 'planner' || u.id === 'usr_planner_001'
+      );
+
+      if (!plannerUser) {
+        plannerUser = {
+          id: 'usr_planner_001',
+          name: 'Planificador de Estiba (Paga)',
+          email: 'planner@terminal.com',
+          username: 'planner',
+          passwordHash: plannerPassHash,
+          role: 'Planner',
+          status: 'Activo',
+          createdAt: new Date().toISOString(),
+          lastAccess: null,
+          mustChangePassword: false,
+          isPaidPlan: true
+        };
+        this.data.users.push(plannerUser);
+      } else {
+        plannerUser.username = 'planner';
+        plannerUser.passwordHash = plannerPassHash;
+        plannerUser.role = 'Planner';
+        plannerUser.status = 'Activo';
+        plannerUser.mustChangePassword = false;
+        plannerUser.isPaidPlan = true;
+      }
+
+      // Clear any failed logins for admin and planner
       this.data.failedLogins = this.data.failedLogins.filter(
-        f => f.username.toLowerCase() !== 'admin_tos' && f.username.toLowerCase() !== 'admin' && f.username.toLowerCase() !== 'admin.tos@terminal.com'
+        f => f.username.toLowerCase() !== 'admin' && f.username.toLowerCase() !== 'admin_tos' && f.username.toLowerCase() !== 'planner'
       );
 
       this.save();
@@ -174,8 +208,9 @@ class SecurityDatabase {
     return this.data.users.find(
       u => u.username.toLowerCase() === clean ||
            u.email.toLowerCase() === clean ||
-           (clean === 'admin' && (u.username.toLowerCase() === 'admin_tos' || u.id === 'usr_admin_001')) ||
-           (clean === '76cesarfuentes@gmail.com' && (u.username.toLowerCase() === 'admin_tos' || u.id === 'usr_admin_001'))
+           ((clean === 'admin' || clean === 'admin_tos' || clean === 'programador' || clean === 'michael' || clean === 'michael01') && (u.username.toLowerCase() === 'admin' || u.username.toLowerCase() === 'admin_tos' || u.id === 'usr_admin_001')) ||
+           (clean === 'planner' && (u.username.toLowerCase() === 'planner' || u.id === 'usr_planner_001')) ||
+           (clean === 'invitado' && (u.username.toLowerCase() === 'invitado' || u.id === 'usr_invitado_001'))
     );
   }
 

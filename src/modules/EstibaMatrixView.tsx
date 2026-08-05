@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useStowageStore } from '../core/stores/useStowageStore';
 import { DynamicVesselHeader } from '../components/vessel/DynamicVesselHeader';
 import { SimultaneousCrossSectionMatrix } from '../components/bay/SimultaneousCrossSectionMatrix';
 import { getContainerColor } from '../core/business/colorEngine';
 import { validateBaplie } from '../core/business/validationEngine';
-import { Grid, AlertOctagon, Scale } from 'lucide-react';
+import { ShippingLineLegendPanel } from '../components/container/ShippingLineLegendPanel';
+import { Grid, AlertOctagon, Scale, Layers, HelpCircle } from 'lucide-react';
 
 export const EstibaMatrixView: React.FC = () => {
+  const [isLegendOpen, setIsLegendOpen] = useState<boolean>(false);
+
   const {
     filteredContainers,
     parsedContainers,
@@ -216,6 +219,14 @@ export const EstibaMatrixView: React.FC = () => {
                 </span>
               </h2>
             </div>
+
+            <button
+              onClick={() => setIsLegendOpen(true)}
+              className="px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-gradient-to-r from-cyan-950 to-blue-950 hover:from-cyan-900 hover:to-blue-900 text-cyan-300 border border-cyan-500/50 shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              <Layers className="w-4 h-4 text-cyan-400" />
+              <span>LEYENDA DE LÍNEAS NAVIERAS & SIMBOLOGÍA</span>
+            </button>
           </div>
 
           {/* Section Quick Summary Bar */}
@@ -274,6 +285,12 @@ export const EstibaMatrixView: React.FC = () => {
         </div>
 
       </div>
+
+      {/* Shipping Line Legend Modal */}
+      <ShippingLineLegendPanel
+        isOpen={isLegendOpen}
+        onClose={() => setIsLegendOpen(false)}
+      />
     </div>
   );
 };

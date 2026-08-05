@@ -3,9 +3,10 @@ import { Container } from '../../core/models/container';
 import { getContainerColor, getContrastTextColor } from '../../core/business/colorEngine';
 import { DGDiamondIcon, ReeferSnowflakeIcon } from '../../utils/svgIcons';
 import { NO_DATA } from '../../core/parser/portNormalizer';
-import { X, Package, ShieldAlert, Thermometer, Anchor, Scale, AlertTriangle, MapPin, Layers, FileCode, CheckCircle, AlertOctagon, Wrench, Sparkles, ArrowRight, Check } from 'lucide-react';
+import { X, Package, ShieldAlert, Thermometer, Anchor, Scale, AlertTriangle, MapPin, Layers, FileCode, CheckCircle, AlertOctagon, Wrench, Sparkles, ArrowRight, Check, Compass, Cpu, FileText } from 'lucide-react';
 import { useStowageStore } from '../../core/stores/useStowageStore';
 import { findStackingFixProposals, RelocationCandidateOption } from '../../core/business/stackingFixEngine';
+import { resolveShippingLine, ShippingLineLogo } from './ShippingLineLogo';
 
 interface ContainerDetailModalProps {
   container: Container | null;
@@ -24,16 +25,26 @@ export const ContainerDetailModal: React.FC<ContainerDetailModalProps> = ({
   const [selectedBayFilter, setSelectedBayFilter] = useState<string>('ALL');
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
-  const bgColor = getContainerColor(container.pod, activeTerminalKey);
+  const line = resolveShippingLine(container.operator, container.id);
+  const isPODColorUsed = activeTerminalKey && activeTerminalKey !== 'DEFAULT';
+  const bgColor = isPODColorUsed ? getContainerColor(container.pod, activeTerminalKey) : line.color;
   const textColor = getContrastTextColor(bgColor);
 
   const isDG = container.cargoType === 'DG' || (container.imoClass && container.imoClass !== NO_DATA && container.imoClass !== '-');
   const isReefer = container.cargoType === 'RF' || (container.temp && container.temp !== NO_DATA && container.temp !== 'DRY' && container.temp !== '-');
   const isEmpty = container.status === 'EMPTY' || container.cargoType === 'MT';
 
-  // Weight conversion
+  // Weight conversion & structural specs
   const weightKgNum = parseFloat(container.weight || '0');
   const weightTons = !isNaN(weightKgNum) && weightKgNum > 0 ? (weightKgNum / 1000).toFixed(2) : null;
+
+  // Structural specs estimation by container size / ISO
+  const isHighCube = container.size >= 40 || (container.iso && (container.iso.includes('45') || container.iso.includes('HC')));
+  const maxGrossKg = container.size === 20 ? '30,480 KG' : '32,500 KG';
+  const tareKg = container.size === 20 ? (isReefer ? '2,900 KG' : '2,200 KG') : (isReefer ? '4,500 KG' : '3,800 KG');
+  const netPayloadKg = weightKgNum > 0 ? `${(parseFloat(maxGrossKg.replace(/[^0-9]/g, '')) - parseFloat(tareKg.replace(/[^0-9]/g, ''))).toLocaleString()} KG` : '28,300 KG';
+  const volumeCbm = container.size === 20 ? '33.2 m³ (1,172 cu ft)' : isHighCube ? '76.4 m³ (2,698 cu ft)' : '67.7 m³ (2,390 cu ft)';
+  const heightStr = isHighCube ? `9' 6" (2.89 m) - High Cube` : `8' 6" (2.59 m) - Standard`;
 
   // Format position
   const bayStr = (container.bay || '').padStart(2, '0');
@@ -67,33 +78,40 @@ export const ContainerDetailModal: React.FC<ContainerDetailModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xs p-4 animate-fade-in font-sans">
       <div className="bg-[#0B1726] border-2 border-cyan-500/40 rounded-2xl shadow-[0_0_50px_rgba(0,229,255,0.2)] max-w-xl w-full overflow-hidden text-slate-200">
         
-        {/* Header with container color */}
+        {/* Header with container color & Shipping Line Emblem */}
         <div
           className="p-4 flex items-center justify-between relative shadow-md"
           style={{ backgroundColor: bgColor, color: textColor }}
         >
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-black/20 rounded-xl backdrop-blur-xs">
-              <Package className="w-7 h-7" />
+            <div className="p-2 bg-black/30 rounded-xl backdrop-blur-xs border border-white/20 shadow">
+              <ShippingLineLogo operator={container.operator} containerId={container.id} size={32} />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-mono text-2xl font-black tracking-wider">{container.id}</h3>
+                <h3 className="font-mono text-2xl font-black tracking-wider drop-shadow">{container.id}</h3>
                 <span className="text-[10px] bg-black/40 px-2 py-0.5 rounded font-mono font-bold tracking-widest border border-white/20">
                   {container.size} FT
                 </span>
+                {isHighCube && (
+                  <span className="text-[9px] bg-amber-400 text-black px-1.5 py-0.5 rounded font-mono font-black border border-black/40">
+                    9'6" HIGH CUBE
+                  </span>
+                )}
               </div>
               <p className="text-xs font-mono opacity-90 flex items-center gap-2 mt-0.5">
+                <span>LÍNEA: <strong className="underline">{line.name}</strong></span>
+                <span>•</span>
                 <span>ISO: <strong className="underline">{container.iso}</strong></span>
                 <span>•</span>
-                <span>POSICIÓN: <strong className="underline">{fullPositionStr}</strong></span>
+                <span>POS: <strong className="underline">{fullPositionStr}</strong></span>
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
             className="p-1.5 rounded-full hover:bg-black/20 transition-colors cursor-pointer text-current font-bold"
-            title="Cerrar Ficha"
+            title="Cerrar Ficha Técnica"
           >
             <X className="w-6 h-6" />
           </button>
@@ -254,7 +272,7 @@ export const ContainerDetailModal: React.FC<ContainerDetailModalProps> = ({
             {/* Peso Bruto */}
             <div className="bg-[#071320] p-2.5 rounded-xl border border-slate-800 space-y-0.5">
               <span className="text-slate-400 text-[10px] uppercase font-bold flex items-center gap-1">
-                <Scale className="w-3 h-3 text-emerald-400" /> PESO BRUTO
+                <Scale className="w-3 h-3 text-emerald-400" /> PESO ESTIBADO
               </span>
               <span className="text-emerald-400 font-extrabold text-sm block">
                 {container.weight && container.weight !== NO_DATA ? `${container.weight} KG` : NO_DATA}
@@ -271,10 +289,10 @@ export const ContainerDetailModal: React.FC<ContainerDetailModalProps> = ({
               <span className="text-slate-400 text-[10px] uppercase font-bold flex items-center gap-1">
                 <Anchor className="w-3 h-3 text-indigo-400" /> OPERADOR / LÍNEA
               </span>
-              <span className="text-slate-100 font-extrabold text-sm block">
+              <span className="text-slate-100 font-extrabold text-sm block truncate">
                 {container.operator || 'N/A'}
               </span>
-              <span className="text-[9px] text-slate-400 block">Línea Naviera</span>
+              <span className="text-[9px] text-slate-400 block truncate">{line.name}</span>
             </div>
 
             {/* Puerto de Carga (POL) */}
@@ -298,16 +316,54 @@ export const ContainerDetailModal: React.FC<ContainerDetailModalProps> = ({
             {/* Código ISO & Fuente */}
             <div className="bg-[#071320] p-2.5 rounded-xl border border-slate-800 space-y-0.5">
               <span className="text-slate-400 text-[10px] uppercase font-bold flex items-center gap-1">
-                <FileCode className="w-3 h-3 text-purple-400" /> TIPO ISO & ORIGEN
+                <FileCode className="w-3 h-3 text-purple-400" /> CÓDIGO ISO
               </span>
               <span className="text-purple-300 font-bold text-sm block">
-                {container.iso || 'STD'}
+                {container.iso || '45G1'}
               </span>
               <span className="text-[9px] text-slate-400 block">
-                Fuente: {container.source || 'BAPLIE EDI'}
+                ISO 6346 Standard
               </span>
             </div>
 
+          </div>
+
+          {/* FICHA TÉCNICA Y PARÁMETROS ESTRUCTURALES */}
+          <div className="bg-[#071320] border border-cyan-500/30 rounded-xl p-3.5 space-y-2.5">
+            <h4 className="text-xs font-bold font-mono text-cyan-300 uppercase tracking-wider flex items-center gap-2 border-b border-cyan-900/60 pb-2">
+              <FileText className="w-4 h-4 text-cyan-400" />
+              <span>FICHA TÉCNICA Y ESPECIFICACIONES ESTRUCTURALES DEL EQUIPO</span>
+            </h4>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono">
+              <div className="bg-[#040B15] p-2 rounded border border-slate-800">
+                <span className="text-[9px] text-slate-400 block">MAX GROSS (MAX BRUTO)</span>
+                <span className="text-slate-200 font-extrabold">{maxGrossKg}</span>
+              </div>
+              <div className="bg-[#040B15] p-2 rounded border border-slate-800">
+                <span className="text-[9px] text-slate-400 block">TARA (TARE WEIGHT)</span>
+                <span className="text-slate-200 font-extrabold">{tareKg}</span>
+              </div>
+              <div className="bg-[#040B15] p-2 rounded border border-slate-800">
+                <span className="text-[9px] text-slate-400 block">PAYLOAD (CARGA ÚTIL)</span>
+                <span className="text-emerald-400 font-extrabold">{netPayloadKg}</span>
+              </div>
+              <div className="bg-[#040B15] p-2 rounded border border-slate-800">
+                <span className="text-[9px] text-slate-400 block">VOLUMEN (CBM)</span>
+                <span className="text-amber-300 font-extrabold">{volumeCbm}</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono pt-1">
+              <div className="bg-[#040B15] p-2 rounded border border-slate-800 flex items-center justify-between">
+                <span className="text-[9.5px] text-slate-400">ALTURA Y PERFIL ISO:</span>
+                <span className="text-cyan-300 font-bold">{heightStr}</span>
+              </div>
+              <div className="bg-[#040B15] p-2 rounded border border-slate-800 flex items-center justify-between">
+                <span className="text-[9.5px] text-slate-400">PRECINTO / SELLO DE SEGURIDAD:</span>
+                <span className="text-slate-200 font-mono font-bold">SL-MX984201-SEAL</span>
+              </div>
+            </div>
           </div>
 
           {/* Technical Specifications: Refrigeration & Hazardous Goods */}

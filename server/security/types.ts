@@ -1,4 +1,4 @@
-export type RoleName = 'Administrador' | 'Supervisor' | 'Operador' | 'Consulta';
+export type RoleName = 'Administrador' | 'Supervisor' | 'Operador' | 'Consulta' | 'Planner' | 'Invitado';
 
 export type UserStatus = 'Activo' | 'Suspendido' | 'Bloqueado' | 'Deshabilitado';
 
@@ -13,6 +13,9 @@ export interface User {
   createdAt: string;
   lastAccess: string | null;
   mustChangePassword?: boolean;
+  isPaidPlan?: boolean;
+  sessionCount?: number;
+  maxSessions?: number;
 }
 
 export interface Permission {

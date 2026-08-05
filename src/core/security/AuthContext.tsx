@@ -8,6 +8,7 @@ interface AuthContextType {
   testModeWarning: string | null;
   setTestModeWarning: (msg: string | null) => void;
   login: (username: string, password: string) => Promise<{ success: boolean; error?: string; mustChangePassword?: boolean }>;
+  registerGuest: (name?: string, email?: string, username?: string, password?: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
   hasPermission: (permissionCode: string) => boolean;
@@ -109,6 +110,35 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const registerGuest = async (name?: string, email?: string, username?: string, password?: string) => {
+    try {
+      const res = await fetch('/api/auth/register-guest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, username, password })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        return { success: false, error: data.error || 'Error al registrar invitado.' };
+      }
+
+      if (data.token) {
+        localStorage.setItem('tos_auth_token', data.token);
+      }
+
+      if (data.testModeWarning) {
+        setTestModeWarning(data.testModeWarning);
+      }
+
+      setUser(data.user);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: 'Error de conexión con el servidor.' };
+    }
+  };
+
   const logout = async () => {
     try {
       const token = localStorage.getItem('tos_auth_token');
@@ -188,6 +218,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         testModeWarning,
         setTestModeWarning,
         login,
+        registerGuest,
         logout,
         changePassword,
         hasPermission,
