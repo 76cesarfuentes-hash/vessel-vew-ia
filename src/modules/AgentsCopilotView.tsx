@@ -8,10 +8,11 @@ import { AdjustmentResult } from '../core/business/adjustmentEngine';
 import { buildMasterIndexes, findContainerInIndexes, MasterIndexes } from '../core/business/indexEngine';
 import { exportToExcel, exportToPDF, exportToBaplieEDI, exportRestowsToExcel } from '../core/services/exportService';
 import { Container, getEffectiveCargoType } from '../core/models/container';
+import { AgentMindMapModal } from '../components/common/AgentMindMapModal';
 import {
   ShieldCheck, Bot, Play, Send, Check, X, AlertCircle, Sparkles, FileText,
   Download, Search, AlertTriangle, Zap, RefreshCw, FileSpreadsheet, Layers,
-  CheckCircle2, Anchor, Box, Thermometer, ShieldAlert, ArrowRight, Eye
+  CheckCircle2, Anchor, Box, Thermometer, ShieldAlert, ArrowRight, Eye, Brain
 } from 'lucide-react';
 
 export interface AgentActionMessage {
@@ -56,6 +57,7 @@ export const AgentsCopilotView: React.FC = () => {
   const [selectedError, setSelectedError] = useState<AuditError | null>(null);
   const [solutionProposal, setSolutionProposal] = useState<SolutionProposal | null>(null);
   const [, setLastAdjustmentResult] = useState<AdjustmentResult | null>(null);
+  const [isMindMapOpen, setIsMindMapOpen] = useState(false);
 
   const [chatMessages, setChatMessages] = useState<AgentActionMessage[]>([
     {
@@ -618,6 +620,13 @@ export const AgentsCopilotView: React.FC = () => {
 
         <div className="flex items-center gap-2">
           <button
+            onClick={() => setIsMindMapOpen(true)}
+            className="bg-purple-950/90 hover:bg-purple-900 border border-purple-500/60 text-purple-200 hover:text-white font-bold text-xs py-1.5 px-3 rounded flex items-center gap-1.5 cursor-pointer shadow transition-all"
+          >
+            <Brain className="w-4 h-4 text-purple-400" /> MAPA MENTAL DE IA
+          </button>
+
+          <button
             onClick={handleRunAudit}
             disabled={activeDataset.length === 0}
             className="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs py-1.5 px-3.5 rounded border border-amber-300 flex items-center gap-1.5 cursor-pointer shadow transition-all disabled:opacity-50"
@@ -626,6 +635,8 @@ export const AgentsCopilotView: React.FC = () => {
           </button>
         </div>
       </div>
+
+      <AgentMindMapModal isOpen={isMindMapOpen} onClose={() => setIsMindMapOpen(false)} />
 
       {/* Main 3 Panels Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 flex-1 min-h-0 overflow-hidden">
