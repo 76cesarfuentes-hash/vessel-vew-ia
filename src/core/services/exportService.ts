@@ -586,7 +586,28 @@ export async function exportMiniPlanToPDF(
     const calcWidth = Math.max(element.scrollWidth, element.offsetWidth, 1600);
     const calcHeight = Math.max(element.scrollHeight, element.offsetHeight, 1000);
 
-    // Render full DOM node into canvas with oklch color sanitizer in onclone
+    // Canvas rendering helper context for converting oklch / modern CSS colors
+    let dummyCanvasCtx: CanvasRenderingContext2D | null = null;
+    const convertCssColorToHexOrRgb = (colorStr: string): string => {
+      try {
+        if (!dummyCanvasCtx && typeof document !== 'undefined') {
+          const canvas = document.createElement('canvas');
+          canvas.width = 1;
+          canvas.height = 1;
+          dummyCanvasCtx = canvas.getContext('2d', { willReadFrequently: true });
+        }
+        if (dummyCanvasCtx) {
+          dummyCanvasCtx.fillStyle = '#030914';
+          dummyCanvasCtx.fillStyle = colorStr.trim();
+          return dummyCanvasCtx.fillStyle;
+        }
+      } catch (e) {
+        // Fallback
+      }
+      return '#030914';
+    };
+
+    // Render full DOM node into canvas
     const canvas = await html2canvas(element, {
       scale: 1.5,
       useCORS: true,
@@ -600,8 +621,36 @@ export async function exportMiniPlanToPDF(
         // Unclamp cloned document root & body
         clonedDoc.documentElement.style.overflow = 'visible';
         clonedDoc.documentElement.style.height = 'auto';
+        clonedDoc.documentElement.style.backgroundColor = '#030914';
         clonedDoc.body.style.overflow = 'visible';
         clonedDoc.body.style.height = 'auto';
+        clonedDoc.body.style.backgroundColor = '#030914';
+
+        // Convert all unsupported CSS color functions (oklch, oklab, color-mix, light-dark) to standard RGB/Hex
+        const colorFuncRegex = /(oklch|oklab|color-mix|light-dark)\([^;\}]+\)/gi;
+
+        // 1. Sanitize all <style> elements
+        const styleElements = clonedDoc.querySelectorAll('style');
+        styleElements.forEach((style) => {
+          if (style.textContent && /(oklch|oklab|color-mix|light-dark)/i.test(style.textContent)) {
+            style.textContent = style.textContent.replace(colorFuncRegex, (match) => {
+              return convertCssColorToHexOrRgb(match);
+            });
+          }
+        });
+
+        // 2. Sanitize inline style attributes on all cloned elements
+        const allElements = clonedDoc.querySelectorAll('*');
+        allElements.forEach((el) => {
+          const htmlEl = el as HTMLElement;
+          if (htmlEl.style && htmlEl.style.cssText) {
+            if (/(oklch|oklab|color-mix|light-dark)/i.test(htmlEl.style.cssText)) {
+              htmlEl.style.cssText = htmlEl.style.cssText.replace(colorFuncRegex, (match) => {
+                return convertCssColorToHexOrRgb(match);
+              });
+            }
+          }
+        });
 
         const clonedTarget = clonedDoc.getElementById(elementId);
         if (clonedTarget) {
@@ -617,6 +666,7 @@ export async function exportMiniPlanToPDF(
           clonedTarget.style.height = 'auto';
           clonedTarget.style.maxHeight = 'none';
           clonedTarget.style.overflow = 'visible';
+          clonedTarget.style.backgroundColor = '#030914';
 
           // Hide print:hidden elements in export
           const hiddenElements = clonedTarget.querySelectorAll('.print\\:hidden');
@@ -634,71 +684,6 @@ export async function exportMiniPlanToPDF(
             el.style.flex = 'none';
           });
         }
-
-        // 1. Sanitise all <style> elements containing modern CSS color functions
-        const styleElements = clonedDoc.querySelectorAll('style');
-        styleElements.forEach((style) => {
-          if (style.textContent) {
-            style.textContent = style.textContent
-              .replace(/oklch\([^;\}]+\)/gi, '#030914')
-              .replace(/oklab\([^;\}]+\)/gi, '#030914')
-              .replace(/color-mix\([^;\}]+\)/gi, '#030914')
-              .replace(/light-dark\([^;\}]+\)/gi, '#030914');
-          }
-        });
-
-        // 2. Safely clean clonedDoc styleSheets cssRules if accessible
-        try {
-          Array.from(clonedDoc.styleSheets).forEach((sheet) => {
-            try {
-              const rules = sheet.cssRules || sheet.rules;
-              if (!rules) return;
-              for (let i = rules.length - 1; i >= 0; i--) {
-                const ruleText = rules[i]?.cssText || '';
-                if (/(oklch|oklab|color-mix|light-dark)/i.test(ruleText)) {
-                  try {
-                    sheet.deleteRule(i);
-                  } catch (e) {
-                    // Ignore individual rule delete failure
-                  }
-                }
-              }
-            } catch (e) {
-              // Ignore cross-origin or protected stylesheet errors
-            }
-          });
-        } catch (e) {
-          // Ignore
-        }
-
-        // 3. Sanitise inline style attributes on all cloned elements
-        const allElements = clonedDoc.querySelectorAll('*');
-        allElements.forEach((el) => {
-          const htmlEl = el as HTMLElement;
-          if (htmlEl.style && htmlEl.style.cssText) {
-            if (/(oklch|oklab|lab|lch|color-mix|light-dark)/i.test(htmlEl.style.cssText)) {
-              htmlEl.style.cssText = htmlEl.style.cssText
-                .replace(/oklch\([^;\}]+\)/gi, '#030914')
-                .replace(/oklab\([^;\}]+\)/gi, '#030914')
-                .replace(/color-mix\([^;\}]+\)/gi, '#030914')
-                .replace(/light-dark\([^;\}]+\)/gi, '#030914');
-            }
-          }
-        });
-
-        // 4. Ensure all summary footer panels in every bay card have explicit crisp white text
-        const summarySpans = clonedDoc.querySelectorAll('span, strong, div, p');
-        summarySpans.forEach((node) => {
-          const el = node as HTMLElement;
-          if (el.textContent && (
-            el.textContent.includes('DESCARGA') ||
-            el.textContent.includes('TRÁNSITO') ||
-            el.textContent.includes('TOTAL')
-          )) {
-            el.style.color = '#FFFFFF';
-            el.style.fontWeight = 'bold';
-          }
-        });
       }
     });
 
@@ -1001,9 +986,9 @@ export function printElementViaIframe(elementId: string): boolean {
               print-color-adjust: exact !important;
               color-adjust: exact !important;
               background-color: #030914 !important;
-              color: #f1f5f9 !important;
+              color: #f8fafc !important;
             }
-            .print\\:hidden {
+            .print\:hidden {
               display: none !important;
             }
           }
@@ -1011,11 +996,11 @@ export function printElementViaIframe(elementId: string): boolean {
             margin: 0 !important;
             padding: 0 !important;
             background-color: #030914 !important;
-            color: #f1f5f9 !important;
+            color: #f8fafc !important;
             width: 100% !important;
             height: auto !important;
             overflow: visible !important;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
           }
           #${elementId} {
             width: 100% !important;
@@ -1032,7 +1017,7 @@ export function printElementViaIframe(elementId: string): boolean {
           }
         </style>
       </head>
-      <body style="background-color: #030914; color: #f1f5f9;">
+      <body style="background-color: #030914; color: #f8fafc;">
         <div id="iframe-print-container"></div>
       </body>
     </html>
