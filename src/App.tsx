@@ -58,7 +58,9 @@ import {
   Crown,
   Truck,
   Lock,
-  Globe
+  Globe,
+  Trash2,
+  RotateCcw
 } from 'lucide-react';
 
 export default function App() {
@@ -76,6 +78,7 @@ export default function App() {
     isTerminalGateOpen,
     fileName,
     movinsFileName,
+    isDemoActive,
     setTerminal,
     openTerminalGate,
     closeTerminalGate,
@@ -83,6 +86,7 @@ export default function App() {
     loadBaplieContent,
     loadMovinsContent,
     loadFullRealisticDemo,
+    clearAllData,
     setSelectedContainer,
     setContainers
   } = useStowageStore();
@@ -388,7 +392,20 @@ export default function App() {
             title="Cargar BAPLIE y MOVINS de muestra para pruebas de estiba"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span>⚡ CARGAR DEMO</span>
+            <span>{isDemoActive ? '⚡ RECARGAR DEMO' : '⚡ ACTIVAR MODO DEMO'}</span>
+          </button>
+
+          {/* Clear Demo / Clean Real Workspace Button */}
+          <button
+            onClick={() => {
+              clearAllData();
+              logClientAudit('CLEAR_DEMO_DATA', 'Datos ficticios eliminados. Modo de operación limpia activado.');
+            }}
+            className="bg-rose-950/80 hover:bg-rose-900 text-rose-300 hover:text-rose-100 font-bold text-[10.5px] py-1 px-3 rounded-lg border border-rose-500/60 transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm"
+            title="Eliminar todos los contenedores y datos ficticios para trabajar en modo real desde cero"
+          >
+            <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+            <span>🗑️ QUITAR DEMO / LIMPIAR DATOS</span>
           </button>
         </div>
 

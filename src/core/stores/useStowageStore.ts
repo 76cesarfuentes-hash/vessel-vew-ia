@@ -37,6 +37,7 @@ export interface StowageState {
   baplieHeader?: BaplieHeaderInfo;
   movinsMovements: MovinsMovement[];
   restowReport: MovinsProcessingResult | null;
+  isDemoActive: boolean;
 }
 
 function extractUniqueBays(containers: Container[]): string[] {
@@ -112,7 +113,8 @@ let globalState: StowageState = {
   fileName: 'Sin archivo EDI',
   movinsFileName: 'Sin MOVINS',
   movinsMovements: [],
-  restowReport: null
+  restowReport: null,
+  isDemoActive: true
 };
 
 const listeners = new Set<() => void>();
@@ -317,7 +319,31 @@ export const stowageStore = {
       movinsFileName: 'MOVINS_DEMO_CLSAI.edi',
       restowReport: result,
       activeOperationView: 'DESCARGA',
-      filters: { ...DEFAULT_FILTER_STATE }
+      filters: { ...DEFAULT_FILTER_STATE },
+      isDemoActive: true
+    });
+    notify();
+  },
+
+  clearAllData: () => {
+    resetPodColors();
+    globalState = updateFilteredState({
+      ...globalState,
+      parsedContainers: [],
+      parsedDischargeContainers: [],
+      parsedLoadContainers: [],
+      filteredContainers: [],
+      uniqueBays: [],
+      activeSelectedBay: null,
+      selectedContainer: null,
+      movinsMovements: [],
+      fileName: 'Sin BAPLIE cargado',
+      movinsFileName: 'Sin MOVINS cargado',
+      restowReport: null,
+      baplieHeader: undefined,
+      excelReconciliationList: [],
+      filters: { ...DEFAULT_FILTER_STATE },
+      isDemoActive: false
     });
     notify();
   },
@@ -433,6 +459,7 @@ export function useStowageStore() {
     setPodSequence: stowageStore.setPodSequence,
     setContainers: stowageStore.setContainers,
     loadFullRealisticDemo: stowageStore.loadFullRealisticDemo,
+    clearAllData: stowageStore.clearAllData,
     setFilters: stowageStore.setFilters,
     resetFilters: stowageStore.resetFilters,
     executeAdjustment: stowageStore.executeAdjustment,
